@@ -5,34 +5,41 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ValidadorDatos {
-    public List<String> validarCarga(String nombreMateria, String descripcion,
-                                      LocalDate fechaEntrega, String duracionEstimada) {
-        List<String> errores = new ArrayList<>();
-
-        if (nombreMateria == null || nombreMateria.trim().isEmpty()) {
-            errores.add("materia");
-        }
-        if (descripcion == null || descripcion.trim().isEmpty()) {
-            errores.add("descripcion");
-        }
-        if (fechaEntrega == null) {
-            errores.add("fecha de entrega");
-        }
-        if (!esEnteroPositivo(duracionEstimada)) {
-            errores.add("duracion");
-        }
-
-        return errores;
+    public boolean esTextoValido(String texto) {
+        return texto != null && !texto.trim().isEmpty();
     }
 
-    public boolean esEnteroPositivo(String valor) {
-        if (valor == null || valor.trim().isEmpty()) {
+    public boolean esEnteroPositivo(String texto) {
+        if (!esTextoValido(texto)) {
             return false;
         }
         try {
-            return Integer.parseInt(valor.trim()) > 0;
+            return Integer.parseInt(texto.trim()) > 0;
         } catch (NumberFormatException ex) {
             return false;
         }
+    }
+
+    public boolean esFechaValida(LocalDate fechaEntrega) {
+        return fechaEntrega != null && !fechaEntrega.isBefore(LocalDate.now());
+    }
+
+    public List<String> validarCarga(String nombreMateria, String descripcion,
+                                     LocalDate fechaEntrega, String duracionEstimada) {
+        List<String> errores = new ArrayList<>();
+
+        if (!esTextoValido(nombreMateria)) {
+            errores.add("nombre de la materia (obligatorio)");
+        }
+        if (!esTextoValido(descripcion)) {
+            errores.add("descripcion de la tarea (obligatoria)");
+        }
+        if (!esFechaValida(fechaEntrega)) {
+            errores.add("fecha de entrega (debe ser hoy o posterior)");
+        }
+        if (!esEnteroPositivo(duracionEstimada)) {
+            errores.add("duracion estimada (entero mayor que cero)");
+        }
+        return errores;
     }
 }

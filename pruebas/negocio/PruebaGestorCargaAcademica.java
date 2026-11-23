@@ -1,4 +1,4 @@
-package pruebas;
+package pruebas.negocio;
 
 import modelo.Materia;
 import modelo.Tarea;
