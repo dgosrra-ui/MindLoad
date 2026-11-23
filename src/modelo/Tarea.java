@@ -1,8 +1,11 @@
 package modelo;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 
-public class Tarea {
+public class Tarea implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     public enum Estado {
         PENDIENTE, EN_CURSO, COMPLETADA
     }
@@ -11,7 +14,7 @@ public class Tarea {
     private LocalDate fechaEntrega;
     private int duracionEstimada;
     private Estado estado;
-    private Materia materia;
+    private final Materia materia;
 
     public Tarea(String descripcion, LocalDate fechaEntrega, int duracionEstimada, Materia materia) {
         this.descripcion = descripcion;

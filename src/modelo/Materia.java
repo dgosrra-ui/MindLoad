@@ -1,9 +1,12 @@
 package modelo;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Materia {
+public class Materia implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private String nombre;
     private final List<Tarea> tareas;
 
