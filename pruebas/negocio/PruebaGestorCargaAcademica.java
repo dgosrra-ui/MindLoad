@@ -10,7 +10,7 @@ import java.time.LocalDate;
 public class PruebaGestorCargaAcademica {
     private static int fallos;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         Usuario usuario = new Usuario("Prueba");
         GestorCargaAcademica gestor = new GestorCargaAcademica(usuario);
         LocalDate fecha = LocalDate.now().plusDays(1);
@@ -73,8 +73,10 @@ public class PruebaGestorCargaAcademica {
                 "Eliminar materia vacía");
 
         if (fallos > 0) {
-            throw new AssertionError(fallos + " prueba(s) fallaron.");
+            System.exit(1);
         }
+        System.out.println("Resultado RF-03: pruebas académicas aprobadas.");
+        VerificacionPersistencia.ejecutar();
     }
 
     private static void verificar(boolean condicion, String caso) {

@@ -55,6 +55,6 @@ public class PruebasValidadorDatos {
         verificar("P32", "Mensaje de error identifica duracion", errores("Fisica", "Taller", HOY, "0").get(0).contains("duracion"));
 
         System.out.println("\nRESULTADO UNITARIAS: " + aprobadas + "/" + ejecutadas + " pruebas aprobadas.");
-        if (aprobadas != ejecutadas) throw new AssertionError("Fallo al menos una prueba de RF-03.");
+        if (aprobadas != ejecutadas) System.exit(1);
     }
 }

@@ -11,8 +11,11 @@ import negocio.GestorCargaAcademica;
 import negocio.GestorHorarios;
 import negocio.UsuarioRepositorio;
 
-public class PruebasPersistencia {
-    public static void main(String[] args) throws Exception {
+final class VerificacionPersistencia {
+    private VerificacionPersistencia() {
+    }
+
+    static void ejecutar() throws Exception {
         Path directorio = Files.createTempDirectory("mindload-test-");
         Path archivo = directorio.resolve("usuario.ser");
         try {
