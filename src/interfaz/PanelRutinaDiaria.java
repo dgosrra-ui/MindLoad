@@ -7,9 +7,13 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.DayOfWeek;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
@@ -45,6 +49,7 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
 
     private static final String OPCION_PERSONALIZADA = "Actividad personalizada";
     private static final DateTimeFormatter FORMATO_HORA = DateTimeFormatter.ofPattern("HH:mm:ss");
+    private static final DateTimeFormatter FORMATO_HORA_AGENDA = DateTimeFormatter.ofPattern("HH:mm");
 
     private final GestorCargaAcademica gestor;
     private final GestorHorarios gestorHorarios;
@@ -62,6 +67,8 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
     private JTextField txtMinutosTotales;
     private JLabel lblResumenPlan;
     private JComboBox<String> cmbSaturacionReportada;
+    private JTextField txtFechaRutina;
+    private LocalDate fechaRutina = LocalDate.now();
 
     private JLabel lblFaseActual;
     private JLabel lblReloj;
@@ -75,9 +82,8 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
     private JButton btnAvanzarDemo;
     private JButton btnReiniciarJornada;
 
-    private DefaultTableModel modeloCiclos;
-    private JTable tablaCiclos;
-    private DefaultTableModel modeloAgendaHoy;
+    private DefaultTableModel modeloRutina;
+    private JTable tablaRutina;
     private DefaultListModel<String> modeloAlertas;
 
     public PanelRutinaDiaria(GestorCargaAcademica gestor,
@@ -101,8 +107,7 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
         add(crearPanelCentral(), BorderLayout.CENTER);
 
         refrescarSelectorTareas();
-        actualizarTablaAgendaHoy();
-        actualizarTablaCiclos();
+        actualizarTablaRutinaDiaria();
         actualizarPanelReloj();
         actualizarEstadoBotones();
     }
@@ -315,44 +320,29 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
         JPanel contenedor = new JPanel(new BorderLayout(10, 10));
         contenedor.setBackground(EstilosUI.FONDO_APP);
 
-        JPanel tarjetaAgenda = EstilosUI.crearTarjeta("Agenda de hoy");
+        JPanel tarjetaAgenda = EstilosUI.crearTarjeta("Rutina diaria");
         tarjetaAgenda.setLayout(new BorderLayout());
-        tarjetaAgenda.setPreferredSize(new Dimension(0, 130));
-        modeloAgendaHoy = new DefaultTableModel(new String[]{"Hora", "Actividad", "Tipo"}, 0) {
+        JPanel controlesFecha = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        controlesFecha.setBackground(EstilosUI.FONDO_TARJETA);
+        txtFechaRutina = new JTextField(fechaRutina.toString(), 10);
+        JButton btnConsultarFecha = EstilosUI.crearBoton("Ver fecha", EstilosUI.SECUNDARIO);
+        btnConsultarFecha.addActionListener(e -> consultarFechaRutina());
+        controlesFecha.add(new JLabel("Fecha (AAAA-MM-DD):"));
+        controlesFecha.add(txtFechaRutina);
+        controlesFecha.add(btnConsultarFecha);
+        tarjetaAgenda.add(controlesFecha, BorderLayout.NORTH);
+
+        modeloRutina = new DefaultTableModel(
+                new String[]{"Hora", "Actividad", "Tipo", "Duración", "Estado"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
         };
-        JTable tablaAgendaHoy = new JTable(modeloAgendaHoy);
-        EstilosUI.configurarTabla(tablaAgendaHoy);
-        tarjetaAgenda.add(new JScrollPane(tablaAgendaHoy), BorderLayout.CENTER);
-
-        // Tabla de rutina diaria (ciclos)
-        JPanel tarjetaRutina = EstilosUI.crearTarjeta("Secuencia de Ciclos de la Rutina");
-        tarjetaRutina.setLayout(new BorderLayout());
-
-        String[] columnas = {"Ciclo", "Actividad", "Concentración", "Tipo de pausa", "Pausa", "Estado"};
-        modeloCiclos = new DefaultTableModel(columnas, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-
-        tablaCiclos = new JTable(modeloCiclos);
-        EstilosUI.configurarTabla(tablaCiclos);
-        tablaCiclos.getColumnModel().getColumn(0).setPreferredWidth(55);
-        tablaCiclos.getColumnModel().getColumn(1).setPreferredWidth(190);
-        tablaCiclos.getColumnModel().getColumn(2).setPreferredWidth(100);
-        tablaCiclos.getColumnModel().getColumn(3).setPreferredWidth(100);
-        tablaCiclos.getColumnModel().getColumn(4).setPreferredWidth(70);
-        tablaCiclos.getColumnModel().getColumn(5).setPreferredWidth(105);
-        tablaCiclos.getColumnModel().getColumn(5).setCellRenderer(EstilosUI.crearRendererEstado());
-
-        JScrollPane scrollCiclos = new JScrollPane(tablaCiclos);
-        scrollCiclos.getViewport().setBackground(Color.WHITE);
-        tarjetaRutina.add(scrollCiclos, BorderLayout.CENTER);
+        tablaRutina = new JTable(modeloRutina);
+        EstilosUI.configurarTabla(tablaRutina);
+        tablaRutina.getColumnModel().getColumn(4).setCellRenderer(EstilosUI.crearRendererEstado());
+        tarjetaAgenda.add(new JScrollPane(tablaRutina), BorderLayout.CENTER);
 
         // Historial de alertas
         JPanel tarjetaAlertas = EstilosUI.crearTarjeta("Historial de Alertas y Sugerencias");
@@ -367,28 +357,73 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
         JScrollPane scrollAlertas = new JScrollPane(listaAlertas);
         tarjetaAlertas.add(scrollAlertas, BorderLayout.CENTER);
 
-        contenedor.add(tarjetaAgenda, BorderLayout.NORTH);
-        contenedor.add(tarjetaRutina, BorderLayout.CENTER);
+        contenedor.add(tarjetaAgenda, BorderLayout.CENTER);
         contenedor.add(tarjetaAlertas, BorderLayout.SOUTH);
 
         return contenedor;
     }
 
-    private void actualizarTablaAgendaHoy() {
-        modeloAgendaHoy.setRowCount(0);
-        List<ActividadProgramada> agenda = gestorHorarios.consultarActividadesPorDia(
-                DayOfWeek.from(LocalDate.now()));
-        for (ActividadProgramada actividad : agenda) {
-            modeloAgendaHoy.addRow(new Object[]{
-                actividad.getHoraInicio() + " - " + actividad.getHoraFin(),
-                actividad.getNombre(),
-                actividad.getTipo()
-            });
+    private void consultarFechaRutina() {
+        try {
+            fechaRutina = LocalDate.parse(txtFechaRutina.getText().trim());
+            actualizarTablaRutinaDiaria();
+        } catch (DateTimeParseException ex) {
+            JOptionPane.showMessageDialog(this, "Ingresa una fecha válida en formato AAAA-MM-DD.",
+                    "Fecha inválida", JOptionPane.WARNING_MESSAGE);
         }
     }
 
     public void refrescarAgendaHoy() {
-        actualizarTablaAgendaHoy();
+        actualizarTablaRutinaDiaria();
+    }
+
+    private void actualizarTablaRutinaDiaria() {
+        if (modeloRutina == null) {
+            return;
+        }
+        modeloRutina.setRowCount(0);
+        List<FilaRutina> filas = new ArrayList<>();
+
+        for (ActividadProgramada actividad : gestorHorarios.consultarActividadesPorDia(
+                DayOfWeek.from(fechaRutina))) {
+            long minutos = Duration.between(actividad.getHoraInicio(), actividad.getHoraFin()).toMinutes();
+            filas.add(new FilaRutina(actividad.getHoraInicio(),
+                    actividad.getHoraInicio().format(FORMATO_HORA_AGENDA) + " - "
+                            + actividad.getHoraFin().format(FORMATO_HORA_AGENDA),
+                    actividad.getNombre(), actividad.getTipo(), minutos + " min", "Programada"));
+        }
+
+        for (Tarea tarea : gestor.consultarTareasPorFecha(fechaRutina)) {
+            filas.add(new FilaRutina(null, "Sin hora",
+                    tarea.getMateria().getNombre() + " - " + tarea.getDescripcion(),
+                    "Tarea", tarea.getDuracionEstimada() + " min",
+                    EstilosUI.formatearEstadoTarea(tarea.getEstado())));
+        }
+
+        for (CicloConcentracion ciclo : gestionSaturacion.getCiclos()) {
+            if (ciclo.getFechaPlanificacion().equals(fechaRutina)) {
+                LocalTime hora = ciclo.getHoraInicioReal();
+                filas.add(new FilaRutina(hora, hora == null ? "Sin hora" : hora.format(FORMATO_HORA_AGENDA),
+                        "Ciclo " + ciclo.getNumero() + ": " + ciclo.getActividad(),
+                        "Concentración", ciclo.getDuracionConcentracionMin() + " min",
+                        ciclo.getEstado().getEtiqueta()));
+            }
+        }
+
+        filas.sort((a, b) -> {
+            if (a.orden == null) return b.orden == null ? 0 : 1;
+            if (b.orden == null) return -1;
+            return a.orden.compareTo(b.orden);
+        });
+        if (filas.isEmpty()) {
+            modeloRutina.addRow(new Object[]{"", "No hay actividades para esta fecha", "", "", ""});
+            return;
+        }
+        for (FilaRutina fila : filas) {
+            modeloRutina.addRow(new Object[]{
+                fila.hora, fila.actividad, fila.tipo, fila.duracion, fila.estado
+            });
+        }
     }
 
     private void reportarSaturacion() {
@@ -486,7 +521,7 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
             lblResumenPlan.setText("Plan generado: " + ciclos.size() + " ciclo(s) | "
                     + minutos + " min de estudio | "
                     + gestionSaturacion.getDuracionTotalPlanificadaMin() + " min totales con pausas.");
-            actualizarTablaCiclos();
+            actualizarTablaRutinaDiaria();
             actualizarPanelReloj();
             actualizarEstadoBotones();
         } catch (IllegalArgumentException | IllegalStateException ex) {
@@ -579,32 +614,6 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
         }
         EstadoCiclo estado = actual.getEstado();
         return estado == EstadoCiclo.EN_CONCENTRACION || estado == EstadoCiclo.EN_PAUSA;
-    }
-
-    private void actualizarTablaCiclos() {
-        modeloCiclos.setRowCount(0);
-        List<CicloConcentracion> ciclos = gestionSaturacion.getCiclos();
-        CicloConcentracion actual = gestionSaturacion.getCicloActual();
-        int filaActiva = -1;
-
-        for (int i = 0; i < ciclos.size(); i++) {
-            CicloConcentracion c = ciclos.get(i);
-            modeloCiclos.addRow(new Object[]{
-                    "#" + c.getNumero(),
-                    c.getActividad(),
-                    c.getDuracionConcentracionMin() + " min",
-                    c.getTipoPausa().getEtiqueta(),
-                    c.getDuracionPausaMin() > 0 ? c.getDuracionPausaMin() + " min" : "-",
-                    c.getEstado().getEtiqueta()
-            });
-            if (c == actual) {
-                filaActiva = i;
-            }
-        }
-
-        if (filaActiva >= 0) {
-            tablaCiclos.setRowSelectionInterval(filaActiva, filaActiva);
-        }
     }
 
     private void actualizarPanelReloj() {
@@ -705,7 +714,7 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
             temporizador.stop();
             relojPausado = false;
         }
-        actualizarTablaCiclos();
+        actualizarTablaRutinaDiaria();
         actualizarPanelReloj();
         actualizarEstadoBotones();
     }
@@ -736,7 +745,7 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
             onDatosActualizados.run();
         }
 
-        actualizarTablaCiclos();
+        actualizarTablaRutinaDiaria();
         actualizarPanelReloj();
         actualizarEstadoBotones();
         refrescarSelectorTareas();
@@ -747,5 +756,24 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
                 "Plan completado",
                 JOptionPane.INFORMATION_MESSAGE
         ));
+    }
+
+    private static class FilaRutina {
+        private final LocalTime orden;
+        private final String hora;
+        private final String actividad;
+        private final String tipo;
+        private final String duracion;
+        private final String estado;
+
+        private FilaRutina(LocalTime orden, String hora, String actividad,
+                           String tipo, String duracion, String estado) {
+            this.orden = orden;
+            this.hora = hora;
+            this.actividad = actividad;
+            this.tipo = tipo;
+            this.duracion = duracion;
+            this.estado = estado;
+        }
     }
 }

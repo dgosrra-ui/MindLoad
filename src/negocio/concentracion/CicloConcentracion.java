@@ -1,5 +1,9 @@
 package negocio.concentracion;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+
 /**
  * Representa un bloque de estudio (concentración) seguido de una pausa activa.
  * Controla su propio estado y el tiempo restante de la fase actual.
@@ -21,6 +25,8 @@ public class CicloConcentracion {
     private EstadoCiclo estado;
     private int segundosFase;       // duración total de la fase actual
     private int segundosRestantes;  // tiempo que falta de la fase actual
+    private final LocalDate fechaPlanificacion;
+    private LocalDateTime fechaHoraInicio;
 
     public CicloConcentracion(int numero, String actividad, int duracionConcentracionMin,
                               TipoPausa tipoPausa, int duracionPausaMin) {
@@ -50,6 +56,7 @@ public class CicloConcentracion {
         this.estado = EstadoCiclo.PENDIENTE;
         this.segundosFase = 0;
         this.segundosRestantes = 0;
+        this.fechaPlanificacion = LocalDate.now();
     }
 
     // ---------- Transiciones de estado ----------
@@ -60,6 +67,7 @@ public class CicloConcentracion {
         estado = EstadoCiclo.EN_CONCENTRACION;
         segundosFase = duracionConcentracionMin * 60;
         segundosRestantes = segundosFase;
+        fechaHoraInicio = LocalDateTime.now();
     }
 
     /**
@@ -139,6 +147,14 @@ public class CicloConcentracion {
 
     public int getSegundosRestantes() {
         return segundosRestantes;
+    }
+
+    public LocalDate getFechaPlanificacion() {
+        return fechaPlanificacion;
+    }
+
+    public LocalTime getHoraInicioReal() {
+        return fechaHoraInicio == null ? null : fechaHoraInicio.toLocalTime();
     }
 
     /** Tiempo restante de la fase actual con formato mm:ss para el contador. */
