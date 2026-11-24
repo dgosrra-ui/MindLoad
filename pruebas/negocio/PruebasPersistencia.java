@@ -8,6 +8,7 @@ import java.time.LocalTime;
 import modelo.Materia;
 import modelo.Usuario;
 import negocio.GestorCargaAcademica;
+import negocio.GestorHorarios;
 import negocio.UsuarioRepositorio;
 
 public class PruebasPersistencia {
@@ -19,8 +20,9 @@ public class PruebasPersistencia {
             GestorCargaAcademica gestor = new GestorCargaAcademica(original);
             Materia materia = gestor.registrarMateria("Biología");
             gestor.registrarTarea("Biología", "Lectura", LocalDate.now().plusDays(1), 30);
-            gestor.registrarClase("Laboratorio", DayOfWeek.FRIDAY,
-                    LocalTime.of(14, 0), LocalTime.of(16, 0));
+            new GestorHorarios(original).registrarActividad(
+                    new modelo.Clase("Laboratorio", DayOfWeek.FRIDAY,
+                            LocalTime.of(14, 0), LocalTime.of(16, 0)));
 
             UsuarioRepositorio repositorio = new UsuarioRepositorio(archivo);
             repositorio.guardar(original);

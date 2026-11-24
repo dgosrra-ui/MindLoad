@@ -4,7 +4,9 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JComboBox;
@@ -16,14 +18,19 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 import modelo.ActividadProgramada;
-import negocio.GestorCargaAcademica;
+import modelo.Clase;
+import modelo.Entrenamiento;
+import modelo.PausaActiva;
+import negocio.GestorHorarios;
 
-public class PanelAgenda extends JPanel {
+public class PanelHorarios extends JPanel {
     private static final String[] DIAS = {
         "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"
     };
+    private static final DateTimeFormatter FORMATO_HORA =
+            DateTimeFormatter.ofPattern("HH:mm").withResolverStyle(ResolverStyle.STRICT);
 
-    private final GestorCargaAcademica gestor;
+    private final GestorHorarios gestor;
     private final Runnable onDatosActualizados;
     private final List<ActividadProgramada> actividadesMostradas = new ArrayList<>();
 
@@ -35,7 +42,7 @@ public class PanelAgenda extends JPanel {
     private DefaultTableModel modelo;
     private JTable tabla;
 
-    public PanelAgenda(GestorCargaAcademica gestor, Runnable onDatosActualizados) {
+    public PanelHorarios(GestorHorarios gestor, Runnable onDatosActualizados) {
         this.gestor = gestor;
         this.onDatosActualizados = onDatosActualizados;
         setLayout(new BorderLayout(10, 10));
@@ -64,9 +71,9 @@ public class PanelAgenda extends JPanel {
     }
 
     private JPanel crearFormulario() {
-        JPanel formulario = EstilosUI.crearTarjeta("Registrar clase o entrenamiento");
+        JPanel formulario = EstilosUI.crearTarjeta("Registrar actividad programada");
         formulario.setLayout(new FlowLayout(FlowLayout.LEFT, 8, 8));
-        cmbTipo = new JComboBox<>(new String[]{"Clase", "Entrenamiento"});
+        cmbTipo = new JComboBox<>(new String[]{"Clase", "Entrenamiento", "Pausa activa"});
         cmbDia = new JComboBox<>(DIAS);
         txtNombre = new JTextField(16);
         txtInicio = new JTextField("09:00", 5);
@@ -91,18 +98,27 @@ public class PanelAgenda extends JPanel {
     private void registrarActividad() {
         try {
             DayOfWeek dia = DayOfWeek.of(cmbDia.getSelectedIndex() + 1);
-            LocalTime inicio = LocalTime.parse(txtInicio.getText().trim());
-            LocalTime fin = LocalTime.parse(txtFin.getText().trim());
-            if ("Clase".equals(cmbTipo.getSelectedItem())) {
-                gestor.registrarClase(txtNombre.getText(), dia, inicio, fin);
-            } else {
-                gestor.registrarEntrenamiento(txtNombre.getText(), dia, inicio, fin);
+            LocalTime inicio = LocalTime.parse(txtInicio.getText().trim(), FORMATO_HORA);
+            LocalTime fin = LocalTime.parse(txtFin.getText().trim(), FORMATO_HORA);
+            String nombre = txtNombre.getText();
+            ActividadProgramada actividad;
+            switch ((String) cmbTipo.getSelectedItem()) {
+                case "Clase":
+                    actividad = new Clase(nombre, dia, inicio, fin);
+                    break;
+                case "Entrenamiento":
+                    actividad = new Entrenamiento(nombre, dia, inicio, fin);
+                    break;
+                default:
+                    actividad = new PausaActiva(nombre, dia, inicio, fin);
+                    break;
             }
+            gestor.registrarActividad(actividad);
             txtNombre.setText("");
             refrescarVista();
             onDatosActualizados.run();
         } catch (DateTimeParseException ex) {
-            JOptionPane.showMessageDialog(this, "Ingresa las horas en formato HH:mm.",
+            JOptionPane.showMessageDialog(this, "Ingresa las horas válidas en formato HH:mm.",
                     "Hora inválida", JOptionPane.WARNING_MESSAGE);
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(),
@@ -121,7 +137,7 @@ public class PanelAgenda extends JPanel {
                 "¿Eliminar esta actividad de la agenda?", "Confirmar eliminación",
                 JOptionPane.YES_NO_OPTION);
         if (confirmacion == JOptionPane.YES_OPTION) {
-            gestor.eliminarActividadProgramada(actividadesMostradas.get(fila));
+            gestor.eliminarActividad(actividadesMostradas.get(fila));
             refrescarVista();
             onDatosActualizados.run();
         }
@@ -129,13 +145,13 @@ public class PanelAgenda extends JPanel {
 
     public void refrescarVista() {
         actividadesMostradas.clear();
-        actividadesMostradas.addAll(gestor.getUsuario().getActividadesProgramadas());
+        actividadesMostradas.addAll(gestor.consultarTodas());
         modelo.setRowCount(0);
         for (ActividadProgramada actividad : actividadesMostradas) {
             modelo.addRow(new Object[]{
                 DIAS[actividad.getDia().getValue() - 1],
-                actividad.getHoraInicio(),
-                actividad.getHoraFin(),
+                actividad.getHoraInicio().format(FORMATO_HORA),
+                actividad.getHoraFin().format(FORMATO_HORA),
                 actividad.getNombre(),
                 actividad.getTipo()
             });

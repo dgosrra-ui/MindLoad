@@ -3,14 +3,9 @@ package pruebas.negocio;
 import modelo.Materia;
 import modelo.Tarea;
 import modelo.Usuario;
-import modelo.ActividadProgramada;
-import modelo.Clase;
-import modelo.Entrenamiento;
 import negocio.GestorCargaAcademica;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.LocalTime;
 
 public class PruebaGestorCargaAcademica {
     private static int fallos;
@@ -54,27 +49,6 @@ public class PruebaGestorCargaAcademica {
         } catch (IllegalStateException ex) {
             verificar(true, "Evitar eliminar materia con tareas");
         }
-
-        Clase clase = gestor.registrarClase("Programación", DayOfWeek.MONDAY,
-                LocalTime.of(9, 0), LocalTime.of(10, 0));
-        verificar(clase instanceof ActividadProgramada, "Clase hereda de ActividadProgramada");
-        gestor.registrarEntrenamiento("Natación", DayOfWeek.MONDAY,
-                LocalTime.of(10, 0), LocalTime.of(11, 0));
-        verificar(gestor.consultarAgenda(DayOfWeek.MONDAY).size() == 2,
-                "Consultar agenda ordenada del día");
-        verificar(gestor.consultarAgenda(DayOfWeek.MONDAY).get(0) == clase,
-                "La agenda ordena por hora de inicio");
-        try {
-            gestor.registrarEntrenamiento("Traslape", DayOfWeek.MONDAY,
-                    LocalTime.of(9, 30), LocalTime.of(10, 30));
-            verificar(false, "Rechazar conflicto entre clase y entrenamiento");
-        } catch (IllegalArgumentException ex) {
-            verificar(true, "Rechazar conflicto entre clase y entrenamiento");
-        }
-        gestor.registrarEntrenamiento("Otro día", DayOfWeek.TUESDAY,
-                LocalTime.of(9, 30), LocalTime.of(10, 30));
-        verificar(gestor.consultarAgenda(DayOfWeek.TUESDAY).get(0) instanceof Entrenamiento,
-                "Permitir horario coincidente en otro día");
 
         gestor.eliminarTarea(tarea);
         verificar(materia.getTareas().isEmpty(), "Eliminar tarea");

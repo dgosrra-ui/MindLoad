@@ -35,6 +35,7 @@ import negocio.concentracion.GestionSaturacion;
 import negocio.concentracion.ListenerSaturacion;
 import negocio.concentracion.NivelAlerta;
 import modelo.ActividadProgramada;
+import negocio.GestorHorarios;
 import modelo.Materia;
 import modelo.Tarea;
 import negocio.GestorCargaAcademica;
@@ -46,6 +47,7 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
     private static final DateTimeFormatter FORMATO_HORA = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     private final GestorCargaAcademica gestor;
+    private final GestorHorarios gestorHorarios;
     private final GestionSaturacion gestionSaturacion;
     private final ValidadorDatos validador;
     private final Runnable onDatosActualizados;
@@ -79,9 +81,11 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
     private DefaultListModel<String> modeloAlertas;
 
     public PanelRutinaDiaria(GestorCargaAcademica gestor,
+                             GestorHorarios gestorHorarios,
                              GestionSaturacion gestionSaturacion,
                              Runnable onDatosActualizados) {
         this.gestor = gestor;
+        this.gestorHorarios = gestorHorarios;
         this.gestionSaturacion = gestionSaturacion;
         this.validador = new ValidadorDatos();
         this.onDatosActualizados = onDatosActualizados;
@@ -372,7 +376,8 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
 
     private void actualizarTablaAgendaHoy() {
         modeloAgendaHoy.setRowCount(0);
-        List<ActividadProgramada> agenda = gestor.consultarAgenda(DayOfWeek.from(LocalDate.now()));
+        List<ActividadProgramada> agenda = gestorHorarios.consultarActividadesPorDia(
+                DayOfWeek.from(LocalDate.now()));
         for (ActividadProgramada actividad : agenda) {
             modeloAgendaHoy.addRow(new Object[]{
                 actividad.getHoraInicio() + " - " + actividad.getHoraFin(),

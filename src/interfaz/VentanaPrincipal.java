@@ -21,6 +21,7 @@ import modelo.Materia;
 import modelo.Tarea;
 import modelo.Usuario;
 import negocio.GestorCargaAcademica;
+import negocio.GestorHorarios;
 import negocio.UsuarioRepositorio;
 
 public class VentanaPrincipal extends JFrame {
@@ -28,6 +29,7 @@ public class VentanaPrincipal extends JFrame {
     private final Usuario usuario;
     private final GestorCargaAcademica gestor;
     private final GestionSaturacion gestionSaturacion;
+    private final GestorHorarios gestorHorarios;
     private final UsuarioRepositorio repositorio;
 
     private JLabel lblEstudiante;
@@ -38,7 +40,7 @@ public class VentanaPrincipal extends JFrame {
     private JTabbedPane pestanas;
     private PanelGestionAcademica panelAcademico;
     private PanelRutinaDiaria panelRutina;
-    private PanelAgenda panelAgenda;
+    private PanelHorarios panelHorarios;
 
     public VentanaPrincipal() {
         super("MindLoad - Gestión de Carga Académica y Rutina Diaria");
@@ -48,6 +50,7 @@ public class VentanaPrincipal extends JFrame {
         this.usuario = repositorio.cargar();
         this.gestor = new GestorCargaAcademica(usuario);
         this.gestionSaturacion = new GestionSaturacion();
+        this.gestorHorarios = new GestorHorarios(usuario);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1120, 740);
@@ -118,6 +121,7 @@ public class VentanaPrincipal extends JFrame {
 
         panelRutina = new PanelRutinaDiaria(
                 gestor,
+                gestorHorarios,
                 gestionSaturacion,
                 this::sincronizarVistas
         );
@@ -127,10 +131,10 @@ public class VentanaPrincipal extends JFrame {
                 this::abrirTareaEnRutina,
                 this::sincronizarVistas
         );
-        panelAgenda = new PanelAgenda(gestor, this::sincronizarVistas);
+        panelHorarios = new PanelHorarios(gestorHorarios, this::sincronizarVistas);
 
         pestanas.addTab("Gestión Académica y Consultas", panelAcademico);
-        pestanas.addTab("Agenda semanal", panelAgenda);
+        pestanas.addTab("Horarios", panelHorarios);
         pestanas.addTab("Rutina Diaria y Ciclos (RF-05 / RF-06)", panelRutina);
 
         return pestanas;
@@ -146,7 +150,7 @@ public class VentanaPrincipal extends JFrame {
         panelAcademico.refrescarVista();
         panelRutina.refrescarSelectorTareas();
         panelRutina.refrescarAgendaHoy();
-        panelAgenda.refrescarVista();
+        panelHorarios.refrescarVista();
         actualizarResumenGlobal();
         guardarDatos();
     }
