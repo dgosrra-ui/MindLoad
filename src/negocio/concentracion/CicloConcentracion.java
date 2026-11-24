@@ -26,10 +26,18 @@ public class CicloConcentracion {
     private int segundosFase;       // duración total de la fase actual
     private int segundosRestantes;  // tiempo que falta de la fase actual
     private final LocalDate fechaPlanificacion;
+    private final LocalDateTime fechaHoraPlanificada;
     private LocalDateTime fechaHoraInicio;
 
     public CicloConcentracion(int numero, String actividad, int duracionConcentracionMin,
                               TipoPausa tipoPausa, int duracionPausaMin) {
+        this(numero, actividad, duracionConcentracionMin, tipoPausa, duracionPausaMin,
+                LocalDateTime.now().withSecond(0).withNano(0));
+    }
+
+    public CicloConcentracion(int numero, String actividad, int duracionConcentracionMin,
+                              TipoPausa tipoPausa, int duracionPausaMin,
+                              LocalDateTime fechaHoraPlanificada) {
         if (numero <= 0) {
             throw new IllegalArgumentException("El número de ciclo debe ser mayor que cero.");
         }
@@ -48,6 +56,9 @@ public class CicloConcentracion {
         if (tipoPausa != TipoPausa.NINGUNA && duracionPausaMin <= 0) {
             throw new IllegalArgumentException("La duración de la pausa debe ser mayor que cero.");
         }
+        if (fechaHoraPlanificada == null) {
+            throw new IllegalArgumentException("La fecha y hora planificadas son obligatorias.");
+        }
         this.numero = numero;
         this.actividad = actividad.trim();
         this.duracionConcentracionMin = duracionConcentracionMin;
@@ -56,7 +67,8 @@ public class CicloConcentracion {
         this.estado = EstadoCiclo.PENDIENTE;
         this.segundosFase = 0;
         this.segundosRestantes = 0;
-        this.fechaPlanificacion = LocalDate.now();
+        this.fechaHoraPlanificada = fechaHoraPlanificada;
+        this.fechaPlanificacion = fechaHoraPlanificada.toLocalDate();
     }
 
     // ---------- Transiciones de estado ----------
@@ -163,6 +175,14 @@ public class CicloConcentracion {
 
     public LocalDate getFechaPlanificacion() {
         return fechaPlanificacion;
+    }
+
+    public LocalDateTime getFechaHoraPlanificada() {
+        return fechaHoraPlanificada;
+    }
+
+    public LocalTime getHoraInicioPlanificada() {
+        return fechaHoraPlanificada.toLocalTime();
     }
 
     public LocalTime getHoraInicioReal() {

@@ -1,45 +1,102 @@
 @startuml
 skinparam classAttributeIconSize 0
 
-class Usuario {
-  - nombre: String
-  - materias: List<Materia>
-  - actividadesProgramadas: List<ActividadProgramada>
+package modelo {
+  class Usuario {
+    - nombre: String
+    - materias: List<Materia>
+    - actividadesProgramadas: List<ActividadProgramada>
+    + agregarActividadProgramada(ActividadProgramada): void
+  }
+
+  class Materia {
+    - nombre: String
+    - tareas: List<Tarea>
+  }
+
+  class Tarea {
+    - descripcion: String
+    - fechaEntrega: LocalDate
+    - horaProgramada: LocalTime
+    - duracionEstimada: int
+    - estado: Estado
+  }
+
+  abstract class ActividadProgramada {
+    - nombre: String
+    - dia: DayOfWeek
+    - horaInicio: LocalTime
+    - horaFin: LocalTime
+    + getTipo(): String
+  }
+
+  class Clase
+  class Entrenamiento
+  class PausaActiva
+
+  enum Estado {
+    PENDIENTE
+    EN_CURSO
+    COMPLETADA
+  }
 }
 
-class Materia {
-  - nombre: String
-  - tareas: List<Tarea>
-}
+package negocio {
+  class GestorCargaAcademica {
+    + registrarMateria(String): Materia
+    + registrarTarea(...): Tarea
+    + modificarTarea(Tarea, String, LocalDate): void
+    + eliminarTarea(Tarea): void
+    + eliminarMateria(Materia): void
+  }
 
-class Tarea {
-  - descripcion: String
-  - fechaEntrega: LocalDate
-  - duracionEstimada: int
-  - estado: Estado
-}
+  class GestorHorarios {
+    + registrarActividad(Usuario, ActividadProgramada): void
+    + consultarActividadesPorDia(DayOfWeek): List<ActividadProgramada>
+    + eliminarActividad(ActividadProgramada): void
+  }
 
-abstract class ActividadProgramada {
-  - nombre: String
-  - dia: DayOfWeek
-  - horaInicio: LocalTime
-  - horaFin: LocalTime
-  + getTipo(): String
-}
+  class UsuarioRepositorio {
+    + cargar(): Usuario
+    + guardar(Usuario): void
+  }
 
-class Clase
-class Entrenamiento
-class GestorCargaAcademica
-class UsuarioRepositorio
-class GestionSaturacion
-class CicloConcentracion
+  package concentracion {
+    class GestionSaturacion {
+      + planificar(String, int): List<CicloConcentracion>
+      + reportarSaturacion(NivelAlerta): void
+      + getMinutosPendientes(): int
+    }
+
+    class CicloConcentracion {
+      - numero: int
+      - actividad: String
+      - fechaHoraPlanificada: LocalDateTime
+      - estado: EstadoCiclo
+      + iniciarConcentracion(): void
+      + terminarConcentracion(): void
+    }
+
+    interface ListenerSaturacion
+    enum NivelAlerta
+    enum EstadoCiclo
+    enum TipoPausa
+  }
+}
 
 Usuario "1" *-- "0..*" Materia
 Materia "1" *-- "0..*" Tarea
 Usuario "1" *-- "0..*" ActividadProgramada
 ActividadProgramada <|-- Clase
 ActividadProgramada <|-- Entrenamiento
+ActividadProgramada <|-- PausaActiva
+
 GestorCargaAcademica --> Usuario
+GestorHorarios --> Usuario
 UsuarioRepositorio ..> Usuario : serializa
-GestionSaturacion --> CicloConcentracion
+GestionSaturacion "1" *-- "0..*" CicloConcentracion
+GestionSaturacion ..> ListenerSaturacion : notifica
+GestionSaturacion ..> NivelAlerta
+CicloConcentracion ..> EstadoCiclo
+CicloConcentracion ..> TipoPausa
 @enduml

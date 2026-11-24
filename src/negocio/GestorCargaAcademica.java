@@ -1,6 +1,7 @@
 package negocio;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import modelo.Materia;
@@ -34,6 +35,12 @@ public class GestorCargaAcademica {
 
     public Tarea registrarTarea(String nombreMateria, String descripcion,
                                 LocalDate fechaEntrega, int duracionEstimada) {
+        return registrarTarea(nombreMateria, descripcion, fechaEntrega, duracionEstimada, null);
+    }
+
+    public Tarea registrarTarea(String nombreMateria, String descripcion,
+                                LocalDate fechaEntrega, int duracionEstimada,
+                                LocalTime horaProgramada) {
         List<String> errores = validador.validarCarga(nombreMateria, descripcion,
                 fechaEntrega, String.valueOf(duracionEstimada));
         if (!errores.isEmpty()) {
@@ -43,7 +50,7 @@ public class GestorCargaAcademica {
         if (materia == null) {
             throw new IllegalArgumentException("La materia indicada no existe. Debe registrarla primero.");
         }
-        Tarea tarea = new Tarea(descripcion.trim(), fechaEntrega, duracionEstimada, materia);
+        Tarea tarea = new Tarea(descripcion.trim(), fechaEntrega, duracionEstimada, materia, horaProgramada);
         materia.agregarTarea(tarea);
         return tarea;
     }

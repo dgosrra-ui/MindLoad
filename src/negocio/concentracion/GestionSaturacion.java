@@ -1,5 +1,6 @@
 package negocio.concentracion;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -108,11 +109,20 @@ public class GestionSaturacion {
      * @return lista no modificable con los ciclos creados
      */
     public List<CicloConcentracion> planificar(String actividad, int minutosTotales) {
+        return planificar(actividad, minutosTotales,
+                LocalDateTime.now().withSecond(0).withNano(0));
+    }
+
+    public List<CicloConcentracion> planificar(String actividad, int minutosTotales,
+                                               LocalDateTime fechaHoraInicio) {
         if (actividad == null || actividad.trim().isEmpty()) {
             throw new IllegalArgumentException("La actividad no puede estar vacía.");
         }
         if (minutosTotales <= 0) {
             throw new IllegalArgumentException("El tiempo de estudio debe ser mayor que cero.");
+        }
+        if (fechaHoraInicio == null) {
+            throw new IllegalArgumentException("La fecha y hora planificadas son obligatorias.");
         }
         if (hayCicloActivo()) {
             throw new IllegalStateException("No se puede replanificar mientras hay un ciclo en curso.");
@@ -140,6 +150,7 @@ public class GestionSaturacion {
         ciclos.clear();
         indiceActual = -1;
         int total = duraciones.size();
+        LocalDateTime horaPlanificada = fechaHoraInicio.withSecond(0).withNano(0);
         for (int i = 0; i < total; i++) {
             TipoPausa tipo;
             int pausaMin;
@@ -153,7 +164,9 @@ public class GestionSaturacion {
                 tipo = TipoPausa.CORTA;
                 pausaMin = pausaCortaMin;
             }
-            ciclos.add(new CicloConcentracion(i + 1, actividad, duraciones.get(i), tipo, pausaMin));
+            ciclos.add(new CicloConcentracion(i + 1, actividad, duraciones.get(i), tipo, pausaMin,
+                    horaPlanificada));
+            horaPlanificada = horaPlanificada.plusMinutes(duraciones.get(i) + pausaMin);
         }
         return getCiclos();
     }

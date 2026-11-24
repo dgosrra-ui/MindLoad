@@ -6,6 +6,7 @@ import modelo.Usuario;
 import negocio.GestorCargaAcademica;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 public class PruebaGestorCargaAcademica {
     private static int fallos;
@@ -20,8 +21,10 @@ public class PruebaGestorCargaAcademica {
                 "Registrar materia correctamente");
 
         Tarea tarea = gestor.registrarTarea("Programacion II", "Proyecto MindLoad",
-                fecha, 90);
+                fecha, 90, LocalTime.of(9, 30));
         verificar(tarea.getMateria() == materia, "Registrar tarea asociada");
+        verificar(tarea.getHoraProgramada().equals(LocalTime.of(9, 30)),
+                "Conservar hora planificada de la tarea");
 
         try {
             gestor.registrarTarea("Materia inexistente", "Tarea", fecha, 30);

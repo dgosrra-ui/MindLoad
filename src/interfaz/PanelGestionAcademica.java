@@ -8,6 +8,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +44,7 @@ public class PanelGestionAcademica extends JPanel {
     private JComboBox<Materia> cmbMateriaRegistro;
     private JTextField txtDescripcion;
     private JTextField txtFechaEntrega;
+    private JTextField txtHoraProgramada;
     private JTextField txtDuracion;
 
     private JComboBox<String> cmbTipoConsulta;
@@ -131,21 +134,28 @@ public class PanelGestionAcademica extends JPanel {
         tarjetaTarea.add(txtFechaEntrega, gbcT);
 
         gbcT.gridy = 6;
+        tarjetaTarea.add(new JLabel("Hora planificada (HH:mm):"), gbcT);
+        txtHoraProgramada = new JTextField("09:00");
+        txtHoraProgramada.setFont(EstilosUI.FUENTE_NORMAL);
+        gbcT.gridy = 7;
+        tarjetaTarea.add(txtHoraProgramada, gbcT);
+
+        gbcT.gridy = 8;
         tarjetaTarea.add(new JLabel("Duración estimada (minutos):"), gbcT);
         txtDuracion = new JTextField("50");
         txtDuracion.setFont(EstilosUI.FUENTE_NORMAL);
-        gbcT.gridy = 7;
+        gbcT.gridy = 9;
         tarjetaTarea.add(txtDuracion, gbcT);
 
         JButton btnRegistrarTarea = EstilosUI.crearBoton("Agregar tarea", EstilosUI.EXITO);
         btnRegistrarTarea.addActionListener(e -> registrarTarea());
-        gbcT.gridy = 8;
+        gbcT.gridy = 10;
         gbcT.insets = new Insets(10, 4, 4, 4);
         tarjetaTarea.add(btnRegistrarTarea, gbcT);
 
-        JLabel notaValidacion = new JLabel("<html><i style='color:#64748b'>La fecha debe ser hoy o posterior y la duración mayor a 0 min.</i></html>");
+        JLabel notaValidacion = new JLabel("<html><i style='color:#64748b'>La fecha debe ser hoy o posterior; hora HH:mm y duración mayor a 0 min.</i></html>");
         notaValidacion.setFont(EstilosUI.FUENTE_PEQUENA);
-        gbcT.gridy = 9;
+        gbcT.gridy = 11;
         gbcT.insets = new Insets(4, 4, 4, 4);
         tarjetaTarea.add(notaValidacion, gbcT);
 
@@ -328,6 +338,17 @@ public class PanelGestionAcademica extends JPanel {
             return;
         }
 
+        LocalTime horaProgramada;
+        try {
+            horaProgramada = LocalTime.parse(txtHoraProgramada.getText().trim(),
+                    DateTimeFormatter.ofPattern("HH:mm"));
+        } catch (DateTimeParseException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Ingresa una hora válida en formato HH:mm (por ejemplo, 09:00).",
+                    "Hora inválida", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         String duracionTexto = txtDuracion.getText().trim();
         if (!validador.esEnteroPositivo(duracionTexto)) {
             JOptionPane.showMessageDialog(this,
@@ -339,9 +360,11 @@ public class PanelGestionAcademica extends JPanel {
 
         int duracion = Integer.parseInt(duracionTexto);
         try {
-            gestor.registrarTarea(materia.getNombre(), txtDescripcion.getText(), fechaEntrega, duracion);
+            gestor.registrarTarea(materia.getNombre(), txtDescripcion.getText(),
+                    fechaEntrega, duracion, horaProgramada);
             txtDescripcion.setText("");
             txtFechaEntrega.setText(LocalDate.now().toString());
+            txtHoraProgramada.setText("09:00");
             txtDuracion.setText("50");
             aplicarConsulta();
             onDatosActualizados.run();

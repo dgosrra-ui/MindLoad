@@ -1,40 +1,63 @@
 # MindLoad
 
-Proyecto Java organizado por paquetes:
+Aplicación de escritorio para organizar la carga académica, planificar horarios
+y trabajar con ciclos de concentración y pausas activas.
 
-- `src/modelo/`: entidades del dominio.
-- `src/negocio/`: gestión académica, `GestorHorarios`, validaciones y persistencia.
-- `src/negocio/concentracion/`: lógica de ciclos Pomodoro y alertas de saturación.
-- `src/interfaz/`: interfaz gráfica Swing de gestión académica y rutina diaria.
-- `pruebas/negocio/`: pruebas del gestor académico, horarios y persistencia.
-- `pruebas/negocio/concentracion/`: pruebas del módulo de concentración.
+## Requisitos
 
-La aplicación persiste el usuario, sus materias, tareas y agenda semanal en
-`~/.mindload/mindload.dat` y vuelve a guardar al cerrar. Las clases, los
-entrenamientos y las pausas activas comparten la superclase
-`modelo.ActividadProgramada`; los horarios que se traslapan en el mismo día se
-rechazan.
+- JDK 8 o superior.
+- Windows (PowerShell o `cmd`) o un entorno POSIX con `sh`.
+- No requiere dependencias externas.
+
+## Estructura
+
+- `src/modelo/`: entidades y actividades programadas.
+- `src/negocio/`: gestión académica, horarios, validación y persistencia.
+- `src/negocio/concentracion/`: ciclos Pomodoro y alertas de saturación.
+- `src/interfaz/`: interfaz gráfica Swing.
+- `pruebas/`: cuatro suites ejecutables sin bibliotecas de prueba externas.
+- `docs/`: manual de usuario y diagrama PlantUML.
+
+La aplicación guarda el usuario, sus materias, tareas y agenda semanal en
+`~/.mindload/mindload.dat` al cerrar y lo carga al iniciar.
 
 ## Compilar
 
-```powershell
-javac -encoding UTF-8 -d out (Get-ChildItem -Recurse -Path src,pruebas -Filter *.java | ForEach-Object { $_.FullName })
-```
-
-## Ejecutar pruebas
+Desde PowerShell, en la raíz del proyecto:
 
 ```powershell
-java '-Dfile.encoding=UTF-8' -cp out pruebas.negocio.PruebasValidadorDatos
-java '-Dfile.encoding=UTF-8' -cp out pruebas.negocio.PruebaGestorCargaAcademica
-java '-Dfile.encoding=UTF-8' -cp out pruebas.negocio.PruebasPersistencia
-java '-Dfile.encoding=UTF-8' -cp out pruebas.negocio.concentracion.PruebasGestionSaturacion
+New-Item -ItemType Directory -Force out
+$fuentes = Get-ChildItem -Recurse -Path src -Filter *.java | ForEach-Object { $_.FullName }
+javac -encoding UTF-8 -d out $fuentes
 ```
 
-## Ejecutar la interfaz gráfica
+Los scripts de pruebas también compilan las fuentes y las pruebas.
+
+## Ejecutar
+
+Después de compilar:
 
 ```powershell
-java '-Dfile.encoding=UTF-8' -cp out interfaz.VentanaPrincipal
+java -Dfile.encoding=UTF-8 -cp out interfaz.VentanaPrincipal
 ```
+
+## Ejecutar las pruebas
+
+En Windows:
+
+```powershell
+.\ejecutar_pruebas.bat
+```
+
+En Linux, macOS o Git Bash:
+
+```sh
+sh ejecutar_pruebas.sh
+```
+
+Los scripts compilan el proyecto y ejecutan las suites de validación, gestión
+académica (incluida la persistencia), horarios y concentración/saturación. Un
+código de salida distinto de cero indica compilación o pruebas fallidas.
 
 Consulta el [manual de usuario](docs/ManualUsuario.md) y el
 [diagrama de clases](docs/diagrama-clases.puml).

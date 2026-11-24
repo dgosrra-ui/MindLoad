@@ -419,7 +419,8 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
         }
 
         for (Tarea tarea : gestor.consultarTareasPorFecha(fechaRutina)) {
-            filas.add(new FilaRutina(null, "Sin hora",
+            LocalTime hora = tarea.getHoraProgramada();
+            filas.add(new FilaRutina(hora, hora == null ? "Sin hora" : hora.format(FORMATO_HORA_AGENDA),
                     tarea.getMateria().getNombre() + " - " + tarea.getDescripcion(),
                     "Tarea", tarea.getDuracionEstimada() + " min",
                     EstilosUI.formatearEstadoTarea(tarea.getEstado())));
@@ -427,8 +428,9 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
 
         for (CicloConcentracion ciclo : gestionSaturacion.getCiclos()) {
             if (ciclo.getFechaPlanificacion().equals(fechaRutina)) {
-                LocalTime hora = ciclo.getHoraInicioReal();
-                filas.add(new FilaRutina(hora, hora == null ? "Sin hora" : hora.format(FORMATO_HORA_AGENDA),
+                LocalTime hora = ciclo.getHoraInicioReal() == null
+                        ? ciclo.getHoraInicioPlanificada() : ciclo.getHoraInicioReal();
+                filas.add(new FilaRutina(hora, hora.format(FORMATO_HORA_AGENDA),
                         "Ciclo " + ciclo.getNumero() + ": " + ciclo.getActividad(),
                         "Concentración", ciclo.getDuracionConcentracionMin() + " min",
                         ciclo.getEstado().getEtiqueta()));
@@ -579,7 +581,8 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
 
         int minutos = Integer.parseInt(minutosTexto);
         try {
-            List<CicloConcentracion> ciclos = gestionSaturacion.planificar(actividad, minutos);
+            List<CicloConcentracion> ciclos = gestionSaturacion.planificar(actividad, minutos,
+                    fechaRutina.atTime(LocalTime.now()));
             temporizador.stop();
             relojPausado = false;
 

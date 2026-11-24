@@ -8,6 +8,7 @@ import negocio.concentracion.ListenerSaturacion;
 import negocio.concentracion.NivelAlerta;
 import negocio.concentracion.TipoPausa;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -87,6 +88,13 @@ public class PruebasGestionSaturacion {
         check("P4-01b pausas: corta, corta, corta y último sin pausa",
                 c.get(0).getTipoPausa() == TipoPausa.CORTA && c.get(2).getTipoPausa() == TipoPausa.CORTA
                         && c.get(3).getTipoPausa() == TipoPausa.NINGUNA);
+        check("P4-01c ciclos consecutivos tienen hora planificada",
+                c.get(1).getFechaHoraPlanificada().equals(
+                        c.get(0).getFechaHoraPlanificada().plusMinutes(30)));
+        LocalDateTime inicioFijo = LocalDateTime.of(2026, 11, 23, 10, 0);
+        c = g.planificar("Cálculo", 25, inicioFijo);
+        check("P4-01d la rutina respeta el día y hora seleccionados",
+                c.get(0).getFechaHoraPlanificada().equals(inicioFijo));
 
         c = g.planificar("Cálculo", 200);
         check("P4-02 200 min -> 8 ciclos, pausa larga tras el 4, último sin pausa",
