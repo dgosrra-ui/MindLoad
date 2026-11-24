@@ -42,6 +42,22 @@ public class PruebaGestorCargaAcademica {
                 "Consultar fecha sin tareas");
         verificar(gestor.consultarTareasPorMateria(materia).size() == 1,
                 "Consultar tareas por materia");
+        gestor.modificarTarea(tarea, "Proyecto MindLoad actualizado", fecha.plusDays(2));
+        verificar(tarea.getDescripcion().equals("Proyecto MindLoad actualizado")
+                        && tarea.getFechaEntrega().equals(fecha.plusDays(2)),
+                "Editar descripción y fecha");
+        try {
+            gestor.modificarTarea(tarea, "  ", fecha);
+            verificar(false, "Rechazar descripción vacía al editar");
+        } catch (IllegalArgumentException ex) {
+            verificar(true, "Rechazar descripción vacía al editar");
+        }
+        try {
+            gestor.modificarTarea(tarea, "Tarea", LocalDate.now().minusDays(1));
+            verificar(false, "Rechazar fecha pasada al editar");
+        } catch (IllegalArgumentException ex) {
+            verificar(true, "Rechazar fecha pasada al editar");
+        }
 
         try {
             gestor.eliminarMateria(materia);

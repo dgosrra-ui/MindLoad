@@ -253,6 +253,9 @@ public class PanelGestionAcademica extends JPanel {
         JButton btnModificar = EstilosUI.crearBoton("Modificar duración", EstilosUI.ADVERTENCIA);
         btnModificar.addActionListener(e -> modificarDuracionSeleccionada());
 
+        JButton btnEditar = EstilosUI.crearBoton("Editar tarea", EstilosUI.SECUNDARIO);
+        btnEditar.addActionListener(e -> editarTareaSeleccionada());
+
         JButton btnCompletar = EstilosUI.crearBoton("Marcar como completada", EstilosUI.EXITO);
         btnCompletar.addActionListener(e -> completarTareaSeleccionada());
 
@@ -261,6 +264,7 @@ public class PanelGestionAcademica extends JPanel {
 
         panelAcciones.add(btnEstudiar);
         panelAcciones.add(btnModificar);
+        panelAcciones.add(btnEditar);
         panelAcciones.add(btnCompletar);
         panelAcciones.add(btnEliminar);
 
@@ -411,6 +415,39 @@ public class PanelGestionAcademica extends JPanel {
         gestor.completarTarea(tarea);
         aplicarConsulta();
         onDatosActualizados.run();
+    }
+
+    private void editarTareaSeleccionada() {
+        Tarea tarea = obtenerTareaSeleccionada();
+        if (tarea == null) {
+            return;
+        }
+        String descripcion = JOptionPane.showInputDialog(this,
+                "Descripción de la tarea:", tarea.getDescripcion());
+        if (descripcion == null) {
+            return;
+        }
+        String fechaTexto = JOptionPane.showInputDialog(this,
+                "Fecha de entrega (AAAA-MM-DD):", tarea.getFechaEntrega().toString());
+        if (fechaTexto == null) {
+            return;
+        }
+        LocalDate fecha;
+        try {
+            fecha = LocalDate.parse(fechaTexto.trim());
+        } catch (DateTimeParseException ex) {
+            JOptionPane.showMessageDialog(this, "Ingresa una fecha válida en formato AAAA-MM-DD.",
+                    "Fecha inválida", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        try {
+            gestor.modificarTarea(tarea, descripcion, fecha);
+            aplicarConsulta();
+            onDatosActualizados.run();
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(),
+                    "No se pudo editar la tarea", JOptionPane.WARNING_MESSAGE);
+        }
     }
 
     private void eliminarTareaSeleccionada() {

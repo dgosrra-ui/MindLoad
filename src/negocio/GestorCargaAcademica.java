@@ -131,10 +131,34 @@ public class GestorCargaAcademica {
         if (tarea == null) {
             throw new IllegalArgumentException("Debe seleccionar una tarea.");
         }
+        validarTareaDelUsuario(tarea);
         if (!validador.esEnteroPositivo(String.valueOf(nuevaDuracion))) {
             throw new IllegalArgumentException("La duracion debe ser un entero mayor que cero.");
         }
         tarea.setDuracionEstimada(nuevaDuracion);
+    }
+
+    public void modificarTarea(Tarea tarea, String nuevaDescripcion, LocalDate nuevaFechaEntrega) {
+        if (tarea == null) {
+            throw new IllegalArgumentException("Debe seleccionar una tarea.");
+        }
+        validarTareaDelUsuario(tarea);
+        List<String> errores = validador.validarCarga(
+                tarea.getMateria().getNombre(), nuevaDescripcion, nuevaFechaEntrega,
+                String.valueOf(tarea.getDuracionEstimada()));
+        if (!errores.isEmpty()) {
+            throw new IllegalArgumentException("Campos inválidos: " + String.join(", ", errores));
+        }
+        tarea.setDescripcion(nuevaDescripcion.trim());
+        tarea.setFechaEntrega(nuevaFechaEntrega);
+    }
+
+    private void validarTareaDelUsuario(Tarea tarea) {
+        if (tarea.getMateria() == null
+                || !usuario.getMaterias().contains(tarea.getMateria())
+                || !tarea.getMateria().getTareas().contains(tarea)) {
+            throw new IllegalArgumentException("La tarea seleccionada no pertenece a este usuario.");
+        }
     }
 
     public Usuario getUsuario() { return usuario; }
