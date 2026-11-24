@@ -170,7 +170,7 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
         tarjeta.add(lblReporte, gbc);
 
         cmbSaturacionReportada = new JComboBox<>(new String[]{
-            "Normal", "Me siento saturado", "Saturación alta"
+            "Baja", "Media", "Alta"
         });
         gbc.gridx = 1;
         gbc.gridwidth = 2;
@@ -428,9 +428,9 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
 
     private void reportarSaturacion() {
         String seleccion = (String) cmbSaturacionReportada.getSelectedItem();
-        NivelAlerta nivel = "Saturación alta".equals(seleccion)
+        NivelAlerta nivel = "Alta".equals(seleccion)
                 ? NivelAlerta.CRITICA
-                : "Me siento saturado".equals(seleccion) ? NivelAlerta.ADVERTENCIA : NivelAlerta.INFO;
+                : "Media".equals(seleccion) ? NivelAlerta.ADVERTENCIA : NivelAlerta.INFO;
         gestionSaturacion.reportarSaturacion(nivel);
         actualizarPanelReloj();
     }
@@ -732,7 +732,11 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
         lblBannerAlerta.setBackground(EstilosUI.colorFondoAlerta(alerta.getNivel()));
         lblBannerAlerta.setForeground(EstilosUI.colorTextoAlerta(alerta.getNivel()));
         lblBannerAlerta.setText("<html><b>[" + alerta.getNivel() + "]</b> " + alerta.getMensaje() + "</html>");
-
+        if (alerta.getNivel() == NivelAlerta.ADVERTENCIA
+                && alerta.getMensaje().toLowerCase().contains("pausa")) {
+            JOptionPane.showMessageDialog(this, alerta.getMensaje(),
+                    "Pausa obligatoria", JOptionPane.WARNING_MESSAGE);
+        }
     }
 
     @Override

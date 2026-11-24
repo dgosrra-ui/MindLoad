@@ -232,6 +232,33 @@ public class PruebasGestionSaturacion {
         check("P4-23 reiniciar la jornada limpia el reporte manual",
                 reporte.getNivelSaturacion() == NivelAlerta.INFO);
 
+        GestionSaturacion saturacionAlta = new GestionSaturacion();
+        Registro registroAlta = new Registro();
+        saturacionAlta.agregarListener(registroAlta);
+        saturacionAlta.planificar("Lectura", 25);
+        saturacionAlta.iniciarSiguienteCiclo();
+        saturacionAlta.avanzarSegundos(10 * 60);
+        saturacionAlta.reportarSaturacion(NivelAlerta.CRITICA);
+        check("P4-24 saturación alta interrumpe el ciclo y activa pausa",
+                saturacionAlta.getCicloActual().getEstado() == EstadoCiclo.EN_PAUSA);
+        check("P4-25 conserva los 15 minutos no ejecutados como pendientes",
+                saturacionAlta.getMinutosPendientes() == 15);
+        check("P4-26 emite el mensaje exacto de pausa activa",
+                registroAlta.contar(NivelAlerta.ADVERTENCIA,
+                        "Nivel de saturación alto. Es momento de tu pausa activa") == 1);
+        check("P4-27 registra solo el tiempo realmente concentrado",
+                saturacionAlta.getMinutosConcentrados() == 10);
+
+        GestionSaturacion saturacionBaja = new GestionSaturacion();
+        saturacionBaja.planificar("Ejercicios", 25);
+        saturacionBaja.iniciarSiguienteCiclo();
+        saturacionBaja.avanzarSegundos(5 * 60);
+        saturacionBaja.reportarSaturacion(NivelAlerta.INFO);
+        check("P4-28 saturación baja no interrumpe la concentración",
+                saturacionBaja.getCicloActual().getEstado() == EstadoCiclo.EN_CONCENTRACION);
+        check("P4-29 minutos pendientes incluyen el resto del bloque activo",
+                saturacionBaja.getMinutosPendientes() == 20);
+
         GestionSaturacion h = new GestionSaturacion();
         h.planificar("Álgebra", 25);
         CicloConcentracion cf = h.iniciarSiguienteCiclo();

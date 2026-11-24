@@ -19,8 +19,8 @@ public class CicloConcentracion {
     private final int numero;
     private final String actividad;
     private final int duracionConcentracionMin;
-    private final TipoPausa tipoPausa;
-    private final int duracionPausaMin;
+    private TipoPausa tipoPausa;
+    private int duracionPausaMin;
 
     private EstadoCiclo estado;
     private int segundosFase;       // duración total de la fase actual
@@ -84,6 +84,18 @@ public class CicloConcentracion {
             segundosFase = duracionPausaMin * 60;
             segundosRestantes = segundosFase;
         }
+    }
+
+    public void interrumpirConPausa(int duracionPausaMin) {
+        if (duracionPausaMin <= 0) {
+            throw new IllegalArgumentException("La pausa obligatoria debe ser mayor que cero.");
+        }
+        exigirEstado(EstadoCiclo.EN_CONCENTRACION, "interrumpir la concentración");
+        tipoPausa = TipoPausa.CORTA;
+        this.duracionPausaMin = duracionPausaMin;
+        estado = EstadoCiclo.EN_PAUSA;
+        segundosFase = duracionPausaMin * 60;
+        segundosRestantes = segundosFase;
     }
 
     /** EN_PAUSA -> FINALIZADO. */

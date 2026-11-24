@@ -29,6 +29,6 @@ entrenamientos del día con sus horas. La agenda usa repetición semanal.
 La rutina fragmenta una actividad o tarea en ciclos de concentración y pausas.
 También permite planificar la carga académica con entrega para hoy. En la misma
 pantalla, informa tu nivel de saturación usando el control **¿Cómo te sientes?**.
-El reporte se muestra en el banner y en el historial sin ventanas modales ni
-sonidos; puedes continuar usando la aplicación y tomar una pausa cuando lo
-necesites.
+Un reporte alto durante un ciclo activa una pausa obligatoria y conserva el
+tiempo restante como pendiente. Las advertencias de pausa muestran un diálogo
+para que el estudiante confirme que recibió la indicación.

@@ -57,6 +57,7 @@ public class GestionSaturacion {
     private boolean criticaJornadaEmitida = false;
     private int contadorSugerencias = 0;
     private NivelAlerta saturacionReportada = NivelAlerta.INFO;
+    private long segundosPendientes = 0;
 
     /** Configuración por defecto: Pomodoro 25/5, pausa larga de 15 cada 4 ciclos. */
     public GestionSaturacion() {
@@ -254,6 +255,9 @@ public class GestionSaturacion {
             notificarCambio(ciclo, anterior, ciclo.getEstado());
             emitirAlerta(NivelAlerta.INFO, "Pausa terminada. Ya puedes iniciar el ciclo "
                     + (ciclo.getNumero() + 1) + ".");
+            if (isPlanCompletado()) {
+                finalizarPlan();
+            }
         }
     }
 
@@ -309,10 +313,22 @@ public class GestionSaturacion {
             throw new IllegalArgumentException("El nivel de saturación reportado es obligatorio.");
         }
         saturacionReportada = nivel;
+        CicloConcentracion ciclo = getCicloActual();
+        if (nivel == NivelAlerta.CRITICA && ciclo != null
+                && ciclo.getEstado() == EstadoCiclo.EN_CONCENTRACION) {
+            segundosPendientes += ciclo.getSegundosRestantes();
+            EstadoCiclo anterior = ciclo.getEstado();
+            ciclo.interrumpirConPausa(pausaCortaMin);
+            notificarCambio(ciclo, anterior, ciclo.getEstado());
+            emitirAlerta(NivelAlerta.ADVERTENCIA,
+                    "Nivel de saturación alto. Es momento de tu pausa activa");
+            return;
+        }
+
         String mensaje;
         switch (nivel) {
             case CRITICA:
-                mensaje = "El estudiante reporta saturación alta. Considera detener el estudio y descansar.";
+                mensaje = "Nivel de saturación alto. Considera tomar una pausa activa.";
                 break;
             case ADVERTENCIA:
                 mensaje = "El estudiante reporta sentirse saturado. Considera tomar una pausa.";
@@ -343,6 +359,18 @@ public class GestionSaturacion {
 
     public int getMinutosConcentrados() {
         return (int) (segundosConcentrados / 60);
+    }
+
+    public int getMinutosPendientes() {
+        long segundos = segundosPendientes;
+        for (CicloConcentracion ciclo : ciclos) {
+            if (ciclo.getEstado() == EstadoCiclo.PENDIENTE) {
+                segundos += ciclo.getDuracionConcentracionMin() * 60L;
+            } else if (ciclo.getEstado() == EstadoCiclo.EN_CONCENTRACION) {
+                segundos += ciclo.getSegundosRestantes();
+            }
+        }
+        return (int) ((segundos + 59) / 60);
     }
 
     public boolean isPausaObligatoriaPendiente() {
