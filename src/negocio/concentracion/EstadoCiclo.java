@@ -1,4 +1,4 @@
-package mindload.concentracion;
+package negocio.concentracion;
 
 /**
  * Estados por los que pasa un ciclo de concentración.

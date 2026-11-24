@@ -1,0 +1,45 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+class Usuario {
+  - nombre: String
+  - materias: List<Materia>
+  - actividadesProgramadas: List<ActividadProgramada>
+}
+
+class Materia {
+  - nombre: String
+  - tareas: List<Tarea>
+}
+
+class Tarea {
+  - descripcion: String
+  - fechaEntrega: LocalDate
+  - duracionEstimada: int
+  - estado: Estado
+}
+
+abstract class ActividadProgramada {
+  - nombre: String
+  - dia: DayOfWeek
+  - horaInicio: LocalTime
+  - horaFin: LocalTime
+  + getTipo(): String
+}
+
+class Clase
+class Entrenamiento
+class GestorCargaAcademica
+class UsuarioRepositorio
+class GestionSaturacion
+class CicloConcentracion
+
+Usuario "1" *-- "0..*" Materia
+Materia "1" *-- "0..*" Tarea
+Usuario "1" *-- "0..*" ActividadProgramada
+ActividadProgramada <|-- Clase
+ActividadProgramada <|-- Entrenamiento
+GestorCargaAcademica --> Usuario
+UsuarioRepositorio ..> Usuario : serializa
+GestionSaturacion --> CicloConcentracion
+@enduml

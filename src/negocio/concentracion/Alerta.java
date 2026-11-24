@@ -1,4 +1,4 @@
-package mindload.concentracion;
+package negocio.concentracion;
 
 import java.time.LocalDateTime;
 

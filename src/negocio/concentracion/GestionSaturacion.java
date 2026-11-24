@@ -1,4 +1,4 @@
-package mindload.concentracion;
+package negocio.concentracion;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,6 +56,7 @@ public class GestionSaturacion {
     private boolean advertenciaJornadaEmitida = false;
     private boolean criticaJornadaEmitida = false;
     private int contadorSugerencias = 0;
+    private NivelAlerta saturacionReportada = NivelAlerta.INFO;
 
     /** Configuración por defecto: Pomodoro 25/5, pausa larga de 15 cada 4 ciclos. */
     public GestionSaturacion() {
@@ -297,10 +298,30 @@ public class GestionSaturacion {
         if (minutos >= limiteCriticoMin) {
             return NivelAlerta.CRITICA;
         }
-        if (minutos >= limiteAdvertenciaMin) {
+        if (minutos >= limiteAdvertenciaMin || saturacionReportada == NivelAlerta.ADVERTENCIA) {
             return NivelAlerta.ADVERTENCIA;
         }
-        return NivelAlerta.INFO;
+        return saturacionReportada;
+    }
+
+    public void reportarSaturacion(NivelAlerta nivel) {
+        if (nivel == null) {
+            throw new IllegalArgumentException("El nivel de saturación reportado es obligatorio.");
+        }
+        saturacionReportada = nivel;
+        String mensaje;
+        switch (nivel) {
+            case CRITICA:
+                mensaje = "El estudiante reporta saturación alta. Considera detener el estudio y descansar.";
+                break;
+            case ADVERTENCIA:
+                mensaje = "El estudiante reporta sentirse saturado. Considera tomar una pausa.";
+                break;
+            default:
+                mensaje = "El estudiante reporta un nivel de saturación normal.";
+                break;
+        }
+        emitirAlerta(nivel, mensaje);
     }
 
     /** Sugerencia de pausa activa (rota entre varias opciones). */
@@ -337,6 +358,7 @@ public class GestionSaturacion {
         segundosConcentrados = 0;
         advertenciaJornadaEmitida = false;
         criticaJornadaEmitida = false;
+        saturacionReportada = NivelAlerta.INFO;
     }
 
     // ---------- Utilidades internas ----------

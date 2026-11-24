@@ -1,11 +1,19 @@
-package mindload.concentracion;
+package pruebas.negocio.concentracion;
+
+import negocio.concentracion.Alerta;
+import negocio.concentracion.CicloConcentracion;
+import negocio.concentracion.EstadoCiclo;
+import negocio.concentracion.GestionSaturacion;
+import negocio.concentracion.ListenerSaturacion;
+import negocio.concentracion.NivelAlerta;
+import negocio.concentracion.TipoPausa;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Pruebas funcionales del módulo del Integrante 4 (sin librerías externas).
- * Ejecutar: java -cp out mindload.concentracion.PruebasGestionSaturacion
+ * Ejecutar: java -cp out pruebas.negocio.concentracion.PruebasGestionSaturacion
  */
 public class PruebasGestionSaturacion {
 
@@ -211,6 +219,18 @@ public class PruebasGestionSaturacion {
         check("P4-16a minutos concentrados = 10", k.getMinutosConcentrados() == 10);
         k.reiniciarJornada();
         check("P4-16b reiniciarJornada deja el acumulado en 0", k.getMinutosConcentrados() == 0);
+
+        GestionSaturacion reporte = new GestionSaturacion();
+        Registro rr = new Registro();
+        reporte.agregarListener(rr);
+        reporte.reportarSaturacion(NivelAlerta.ADVERTENCIA);
+        check("P4-21 reporte del estudiante actualiza el nivel de saturación",
+                reporte.getNivelSaturacion() == NivelAlerta.ADVERTENCIA);
+        check("P4-22 el reporte de saturación genera una alerta visible al listener",
+                rr.contar(NivelAlerta.ADVERTENCIA, "estudiante reporta") == 1);
+        reporte.reiniciarJornada();
+        check("P4-23 reiniciar la jornada limpia el reporte manual",
+                reporte.getNivelSaturacion() == NivelAlerta.INFO);
 
         GestionSaturacion h = new GestionSaturacion();
         h.planificar("Álgebra", 25);

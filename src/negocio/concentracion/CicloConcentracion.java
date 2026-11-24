@@ -1,4 +1,4 @@
-package mindload.concentracion;
+package negocio.concentracion;
 
 /**
  * Representa un bloque de estudio (concentración) seguido de una pausa activa.

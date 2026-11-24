@@ -1,8 +1,14 @@
 package negocio;
 
 import java.time.LocalDate;
+import java.time.DayOfWeek;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import modelo.ActividadProgramada;
+import modelo.Clase;
+import modelo.Entrenamiento;
 import modelo.Materia;
 import modelo.Tarea;
 import modelo.Usuario;
@@ -46,6 +52,74 @@ public class GestorCargaAcademica {
         Tarea tarea = new Tarea(descripcion.trim(), fechaEntrega, duracionEstimada, materia);
         materia.agregarTarea(tarea);
         return tarea;
+    }
+
+    public void eliminarTarea(Tarea tarea) {
+        if (tarea == null || tarea.getMateria() == null
+                || !usuario.getMaterias().contains(tarea.getMateria())
+                || !tarea.getMateria().getTareas().contains(tarea)) {
+            throw new IllegalArgumentException("La tarea seleccionada no pertenece a este usuario.");
+        }
+        tarea.getMateria().eliminarTarea(tarea);
+    }
+
+    public void eliminarMateria(Materia materia) {
+        if (materia == null || !usuario.getMaterias().contains(materia)) {
+            throw new IllegalArgumentException("La materia seleccionada no pertenece a este usuario.");
+        }
+        if (!materia.getTareas().isEmpty()) {
+            throw new IllegalStateException("Elimina primero las tareas asociadas a esta materia.");
+        }
+        usuario.eliminarMateria(materia);
+    }
+
+    public Clase registrarClase(String nombre, DayOfWeek dia,
+                                LocalTime horaInicio, LocalTime horaFin) {
+        Clase clase = new Clase(nombre, dia, horaInicio, horaFin);
+        validarSinConflicto(clase);
+        usuario.agregarActividadProgramada(clase);
+        return clase;
+    }
+
+    public Entrenamiento registrarEntrenamiento(String nombre, DayOfWeek dia,
+                                                LocalTime horaInicio, LocalTime horaFin) {
+        Entrenamiento entrenamiento = new Entrenamiento(nombre, dia, horaInicio, horaFin);
+        validarSinConflicto(entrenamiento);
+        usuario.agregarActividadProgramada(entrenamiento);
+        return entrenamiento;
+    }
+
+    public void eliminarActividadProgramada(ActividadProgramada actividad) {
+        if (actividad == null || !usuario.eliminarActividadProgramada(actividad)) {
+            throw new IllegalArgumentException("La actividad seleccionada no existe.");
+        }
+    }
+
+    public List<ActividadProgramada> consultarAgenda(DayOfWeek dia) {
+        List<ActividadProgramada> agenda = new ArrayList<>();
+        if (dia == null) {
+            return agenda;
+        }
+        for (ActividadProgramada actividad : usuario.getActividadesProgramadas()) {
+            if (actividad.getDia() == dia) {
+                agenda.add(actividad);
+            }
+        }
+        agenda.sort(Comparator.comparing(ActividadProgramada::getHoraInicio));
+        return agenda;
+    }
+
+    private void validarSinConflicto(ActividadProgramada nueva) {
+        for (ActividadProgramada existente : usuario.getActividadesProgramadas()) {
+            boolean mismoDia = existente.getDia() == nueva.getDia();
+            boolean seTraslapan = nueva.getHoraInicio().isBefore(existente.getHoraFin())
+                    && existente.getHoraInicio().isBefore(nueva.getHoraFin());
+            if (mismoDia && seTraslapan) {
+                throw new IllegalArgumentException("Conflicto de horario con " + existente.getTipo()
+                        + " \"" + existente.getNombre() + "\" ("
+                        + existente.getHoraInicio() + "-" + existente.getHoraFin() + ").");
+            }
+        }
     }
 
     public int calcularCargaPendiente(LocalDate fecha) {

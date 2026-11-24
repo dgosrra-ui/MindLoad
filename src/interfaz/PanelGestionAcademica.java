@@ -81,7 +81,7 @@ public class PanelGestionAcademica extends JPanel {
         // Tarjeta 1: Registro de Materia
         JPanel tarjetaMateria = EstilosUI.crearTarjeta("1. Registrar Materia");
         tarjetaMateria.setLayout(new GridBagLayout());
-        tarjetaMateria.setMaximumSize(new Dimension(Integer.MAX_VALUE, 130));
+        tarjetaMateria.setMaximumSize(new Dimension(Integer.MAX_VALUE, 165));
         GridBagConstraints gbc = crearGbcBase();
 
         gbc.gridx = 0;
@@ -97,6 +97,11 @@ public class PanelGestionAcademica extends JPanel {
         btnRegistrarMateria.addActionListener(e -> registrarMateria());
         gbc.gridy = 2;
         tarjetaMateria.add(btnRegistrarMateria, gbc);
+
+        JButton btnEliminarMateria = EstilosUI.crearBoton("Eliminar materia seleccionada", EstilosUI.PELIGRO);
+        btnEliminarMateria.addActionListener(e -> eliminarMateriaSeleccionada());
+        gbc.gridy = 3;
+        tarjetaMateria.add(btnEliminarMateria, gbc);
 
         // Tarjeta 2: Registro de Tarea
         JPanel tarjetaTarea = EstilosUI.crearTarjeta("2. Registrar Tarea");
@@ -251,9 +256,13 @@ public class PanelGestionAcademica extends JPanel {
         JButton btnCompletar = EstilosUI.crearBoton("Marcar como completada", EstilosUI.EXITO);
         btnCompletar.addActionListener(e -> completarTareaSeleccionada());
 
+        JButton btnEliminar = EstilosUI.crearBoton("Eliminar tarea", EstilosUI.PELIGRO);
+        btnEliminar.addActionListener(e -> eliminarTareaSeleccionada());
+
         panelAcciones.add(btnEstudiar);
         panelAcciones.add(btnModificar);
         panelAcciones.add(btnCompletar);
+        panelAcciones.add(btnEliminar);
 
         panel.add(tarjetaConsulta, BorderLayout.NORTH);
         panel.add(scrollTabla, BorderLayout.CENTER);
@@ -402,6 +411,45 @@ public class PanelGestionAcademica extends JPanel {
         gestor.completarTarea(tarea);
         aplicarConsulta();
         onDatosActualizados.run();
+    }
+
+    private void eliminarTareaSeleccionada() {
+        Tarea tarea = obtenerTareaSeleccionada();
+        if (tarea == null) {
+            return;
+        }
+        int confirmacion = JOptionPane.showConfirmDialog(this,
+                "¿Eliminar la tarea \"" + tarea.getDescripcion() + "\"?",
+                "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
+        if (confirmacion == JOptionPane.YES_OPTION) {
+            gestor.eliminarTarea(tarea);
+            aplicarConsulta();
+            onDatosActualizados.run();
+        }
+    }
+
+    private void eliminarMateriaSeleccionada() {
+        Materia materia = (Materia) cmbMateriaRegistro.getSelectedItem();
+        if (materia == null) {
+            JOptionPane.showMessageDialog(this, "Selecciona una materia.",
+                    "Selección requerida", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        int confirmacion = JOptionPane.showConfirmDialog(this,
+                "¿Eliminar la materia \"" + materia.getNombre()
+                        + "\"? Debe estar vacía de tareas.",
+                "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
+        if (confirmacion != JOptionPane.YES_OPTION) {
+            return;
+        }
+        try {
+            gestor.eliminarMateria(materia);
+            refrescarVista();
+            onDatosActualizados.run();
+        } catch (IllegalStateException | IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(),
+                    "No se pudo eliminar", JOptionPane.WARNING_MESSAGE);
+        }
     }
 
     private Tarea obtenerTareaSeleccionada() {

@@ -1,4 +1,4 @@
-package mindload.concentracion;
+package negocio.concentracion;
 
 /**
  * Tipo de pausa activa que sigue a un ciclo de concentración.

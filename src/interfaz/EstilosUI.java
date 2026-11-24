@@ -15,8 +15,8 @@ import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
 import javax.swing.table.DefaultTableCellRenderer;
-import mindload.concentracion.EstadoCiclo;
-import mindload.concentracion.NivelAlerta;
+import negocio.concentracion.EstadoCiclo;
+import negocio.concentracion.NivelAlerta;
 import modelo.Tarea;
 
 public final class EstilosUI {

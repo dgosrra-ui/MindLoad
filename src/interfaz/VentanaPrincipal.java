@@ -4,7 +4,9 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.io.IOException;
 import java.time.LocalDate;
+import java.nio.file.Paths;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -14,17 +16,19 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import mindload.concentracion.GestionSaturacion;
+import negocio.concentracion.GestionSaturacion;
 import modelo.Materia;
 import modelo.Tarea;
 import modelo.Usuario;
 import negocio.GestorCargaAcademica;
+import negocio.UsuarioRepositorio;
 
 public class VentanaPrincipal extends JFrame {
 
     private final Usuario usuario;
     private final GestorCargaAcademica gestor;
     private final GestionSaturacion gestionSaturacion;
+    private final UsuarioRepositorio repositorio;
 
     private JLabel lblEstudiante;
     private JLabel lblPendientes;
@@ -34,11 +38,14 @@ public class VentanaPrincipal extends JFrame {
     private JTabbedPane pestanas;
     private PanelGestionAcademica panelAcademico;
     private PanelRutinaDiaria panelRutina;
+    private PanelAgenda panelAgenda;
 
     public VentanaPrincipal() {
         super("MindLoad - Gestión de Carga Académica y Rutina Diaria");
 
-        this.usuario = new Usuario("Estudiante");
+        this.repositorio = new UsuarioRepositorio(Paths.get(
+                System.getProperty("user.home"), ".mindload", "usuario.ser"));
+        this.usuario = repositorio.cargar();
         this.gestor = new GestorCargaAcademica(usuario);
         this.gestionSaturacion = new GestionSaturacion();
 
@@ -120,8 +127,10 @@ public class VentanaPrincipal extends JFrame {
                 this::abrirTareaEnRutina,
                 this::sincronizarVistas
         );
+        panelAgenda = new PanelAgenda(gestor, this::sincronizarVistas);
 
         pestanas.addTab("Gestión Académica y Consultas", panelAcademico);
+        pestanas.addTab("Agenda semanal", panelAgenda);
         pestanas.addTab("Rutina Diaria y Ciclos (RF-05 / RF-06)", panelRutina);
 
         return pestanas;
@@ -136,7 +145,21 @@ public class VentanaPrincipal extends JFrame {
     private void sincronizarVistas() {
         panelAcademico.refrescarVista();
         panelRutina.refrescarSelectorTareas();
+        panelRutina.refrescarAgendaHoy();
+        panelAgenda.refrescarVista();
         actualizarResumenGlobal();
+        guardarDatos();
+    }
+
+    private void guardarDatos() {
+        try {
+            repositorio.guardar(usuario);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Los cambios siguen disponibles en esta sesión, pero no se pudieron guardar:\n"
+                            + ex.getMessage(),
+                    "Error de persistencia", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void actualizarResumenGlobal() {
@@ -170,6 +193,7 @@ public class VentanaPrincipal extends JFrame {
         if (nuevoNombre != null && !nuevoNombre.trim().isEmpty()) {
             usuario.setNombre(nuevoNombre.trim());
             lblEstudiante.setText("Estudiante: " + usuario.getNombre() + "  |  Hoy: " + LocalDate.now());
+            guardarDatos();
         }
     }
 
@@ -209,8 +233,13 @@ public class VentanaPrincipal extends JFrame {
         }
 
         SwingUtilities.invokeLater(() -> {
-            VentanaPrincipal ventana = new VentanaPrincipal();
-            ventana.setVisible(true);
+            try {
+                VentanaPrincipal ventana = new VentanaPrincipal();
+                ventana.setVisible(true);
+            } catch (IllegalStateException ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage(),
+                        "No se pudieron cargar los datos", JOptionPane.ERROR_MESSAGE);
+            }
         });
     }
 }

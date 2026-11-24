@@ -7,8 +7,8 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.Toolkit;
 import java.time.LocalDate;
+import java.time.DayOfWeek;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import javax.swing.BorderFactory;
@@ -28,12 +28,13 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.table.DefaultTableModel;
-import mindload.concentracion.Alerta;
-import mindload.concentracion.CicloConcentracion;
-import mindload.concentracion.EstadoCiclo;
-import mindload.concentracion.GestionSaturacion;
-import mindload.concentracion.ListenerSaturacion;
-import mindload.concentracion.NivelAlerta;
+import negocio.concentracion.Alerta;
+import negocio.concentracion.CicloConcentracion;
+import negocio.concentracion.EstadoCiclo;
+import negocio.concentracion.GestionSaturacion;
+import negocio.concentracion.ListenerSaturacion;
+import negocio.concentracion.NivelAlerta;
+import modelo.ActividadProgramada;
 import modelo.Materia;
 import modelo.Tarea;
 import negocio.GestorCargaAcademica;
@@ -58,6 +59,7 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
     private JTextField txtActividad;
     private JTextField txtMinutosTotales;
     private JLabel lblResumenPlan;
+    private JComboBox<String> cmbSaturacionReportada;
 
     private JLabel lblFaseActual;
     private JLabel lblReloj;
@@ -73,6 +75,7 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
 
     private DefaultTableModel modeloCiclos;
     private JTable tablaCiclos;
+    private DefaultTableModel modeloAgendaHoy;
     private DefaultListModel<String> modeloAlertas;
 
     public PanelRutinaDiaria(GestorCargaAcademica gestor,
@@ -94,6 +97,7 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
         add(crearPanelCentral(), BorderLayout.CENTER);
 
         refrescarSelectorTareas();
+        actualizarTablaAgendaHoy();
         actualizarTablaCiclos();
         actualizarPanelReloj();
         actualizarEstadoBotones();
@@ -150,11 +154,30 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
         gbc.gridx = 7;
         tarjeta.add(btnRutinaHoy, gbc);
 
+        JLabel lblReporte = new JLabel("¿Cómo te sientes?");
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        tarjeta.add(lblReporte, gbc);
+
+        cmbSaturacionReportada = new JComboBox<>(new String[]{
+            "Normal", "Me siento saturado", "Saturación alta"
+        });
+        gbc.gridx = 1;
+        gbc.gridwidth = 2;
+        tarjeta.add(cmbSaturacionReportada, gbc);
+
+        JButton btnReportarSaturacion = EstilosUI.crearBoton("Reportar saturación", EstilosUI.ADVERTENCIA);
+        btnReportarSaturacion.addActionListener(e -> reportarSaturacion());
+        gbc.gridx = 3;
+        gbc.gridwidth = 2;
+        tarjeta.add(btnReportarSaturacion, gbc);
+
         lblResumenPlan = new JLabel("Sin rutina planificada. Configura una actividad o elige una tarea para fragmentarla en ciclos Pomodoro (25/5/15 min).");
         lblResumenPlan.setFont(EstilosUI.FUENTE_PEQUENA);
         lblResumenPlan.setForeground(EstilosUI.TEXTO_SECUNDARIO);
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         gbc.gridwidth = 8;
         tarjeta.add(lblResumenPlan, gbc);
 
@@ -288,6 +311,19 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
         JPanel contenedor = new JPanel(new BorderLayout(10, 10));
         contenedor.setBackground(EstilosUI.FONDO_APP);
 
+        JPanel tarjetaAgenda = EstilosUI.crearTarjeta("Agenda de hoy");
+        tarjetaAgenda.setLayout(new BorderLayout());
+        tarjetaAgenda.setPreferredSize(new Dimension(0, 130));
+        modeloAgendaHoy = new DefaultTableModel(new String[]{"Hora", "Actividad", "Tipo"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        JTable tablaAgendaHoy = new JTable(modeloAgendaHoy);
+        EstilosUI.configurarTabla(tablaAgendaHoy);
+        tarjetaAgenda.add(new JScrollPane(tablaAgendaHoy), BorderLayout.CENTER);
+
         // Tabla de rutina diaria (ciclos)
         JPanel tarjetaRutina = EstilosUI.crearTarjeta("Secuencia de Ciclos de la Rutina");
         tarjetaRutina.setLayout(new BorderLayout());
@@ -327,10 +363,36 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
         JScrollPane scrollAlertas = new JScrollPane(listaAlertas);
         tarjetaAlertas.add(scrollAlertas, BorderLayout.CENTER);
 
+        contenedor.add(tarjetaAgenda, BorderLayout.NORTH);
         contenedor.add(tarjetaRutina, BorderLayout.CENTER);
         contenedor.add(tarjetaAlertas, BorderLayout.SOUTH);
 
         return contenedor;
+    }
+
+    private void actualizarTablaAgendaHoy() {
+        modeloAgendaHoy.setRowCount(0);
+        List<ActividadProgramada> agenda = gestor.consultarAgenda(DayOfWeek.from(LocalDate.now()));
+        for (ActividadProgramada actividad : agenda) {
+            modeloAgendaHoy.addRow(new Object[]{
+                actividad.getHoraInicio() + " - " + actividad.getHoraFin(),
+                actividad.getNombre(),
+                actividad.getTipo()
+            });
+        }
+    }
+
+    public void refrescarAgendaHoy() {
+        actualizarTablaAgendaHoy();
+    }
+
+    private void reportarSaturacion() {
+        String seleccion = (String) cmbSaturacionReportada.getSelectedItem();
+        NivelAlerta nivel = "Saturación alta".equals(seleccion)
+                ? NivelAlerta.CRITICA
+                : "Me siento saturado".equals(seleccion) ? NivelAlerta.ADVERTENCIA : NivelAlerta.INFO;
+        gestionSaturacion.reportarSaturacion(nivel);
+        actualizarPanelReloj();
     }
 
     public boolean cargarTareaEnRutina(Tarea tarea) {
@@ -657,17 +719,6 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
         lblBannerAlerta.setForeground(EstilosUI.colorTextoAlerta(alerta.getNivel()));
         lblBannerAlerta.setText("<html><b>[" + alerta.getNivel() + "]</b> " + alerta.getMensaje() + "</html>");
 
-        if (alerta.getNivel() == NivelAlerta.ADVERTENCIA || alerta.getNivel() == NivelAlerta.CRITICA) {
-            Toolkit.getDefaultToolkit().beep();
-        }
-        if (alerta.getNivel() == NivelAlerta.CRITICA) {
-            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(
-                    this,
-                    alerta.getMensaje(),
-                    "Alerta crítica de saturación",
-                    JOptionPane.WARNING_MESSAGE
-            ));
-        }
     }
 
     @Override

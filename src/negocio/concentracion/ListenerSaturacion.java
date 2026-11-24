@@ -1,4 +1,4 @@
-package mindload.concentracion;
+package negocio.concentracion;
 
 /**
  * Contrato entre la lógica de negocio (Integrante 4) y la interfaz gráfica

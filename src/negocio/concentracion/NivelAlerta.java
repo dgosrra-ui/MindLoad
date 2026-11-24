@@ -1,4 +1,4 @@
-package mindload.concentracion;
+package negocio.concentracion;
 
 /**
  * Gravedad de una alerta. La interfaz puede asociar un color a cada nivel
