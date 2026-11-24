@@ -53,7 +53,7 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
 
     private final GestorCargaAcademica gestor;
     private final GestorHorarios gestorHorarios;
-    private final GestionSaturacion gestionSaturacion;
+    private GestionSaturacion gestionSaturacion;
     private final ValidadorDatos validador;
     private final Runnable onDatosActualizados;
 
@@ -68,6 +68,9 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
     private JLabel lblResumenPlan;
     private JComboBox<String> cmbSaturacionReportada;
     private JTextField txtFechaRutina;
+    private JTextField txtDuracionConcentracion;
+    private JTextField txtDuracionPausaCorta;
+    private JTextField txtDuracionPausaLarga;
     private LocalDate fechaRutina = LocalDate.now();
 
     private JLabel lblFaseActual;
@@ -189,6 +192,28 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
         gbc.gridy = 2;
         gbc.gridwidth = 8;
         tarjeta.add(lblResumenPlan, gbc);
+
+        JPanel configuracion = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 2));
+        configuracion.setBackground(EstilosUI.FONDO_TARJETA);
+        txtDuracionConcentracion = new JTextField(
+                String.valueOf(GestionSaturacion.CONCENTRACION_DEFECTO_MIN), 4);
+        txtDuracionPausaCorta = new JTextField(
+                String.valueOf(GestionSaturacion.PAUSA_CORTA_DEFECTO_MIN), 4);
+        txtDuracionPausaLarga = new JTextField(
+                String.valueOf(GestionSaturacion.PAUSA_LARGA_DEFECTO_MIN), 4);
+        JButton btnConfigurar = EstilosUI.crearBoton("Aplicar configuración", EstilosUI.SECUNDARIO);
+        btnConfigurar.addActionListener(e -> configurarDuraciones());
+        configuracion.add(new JLabel("Concentración (min):"));
+        configuracion.add(txtDuracionConcentracion);
+        configuracion.add(new JLabel("Pausa corta (min):"));
+        configuracion.add(txtDuracionPausaCorta);
+        configuracion.add(new JLabel("Pausa larga (min):"));
+        configuracion.add(txtDuracionPausaLarga);
+        configuracion.add(btnConfigurar);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridwidth = 8;
+        tarjeta.add(configuracion, gbc);
 
         return tarjeta;
     }
@@ -433,6 +458,49 @@ public class PanelRutinaDiaria extends JPanel implements ListenerSaturacion {
                 : "Media".equals(seleccion) ? NivelAlerta.ADVERTENCIA : NivelAlerta.INFO;
         gestionSaturacion.reportarSaturacion(nivel);
         actualizarPanelReloj();
+    }
+
+    private void configurarDuraciones() {
+        String concentracion = txtDuracionConcentracion.getText().trim();
+        String pausaCorta = txtDuracionPausaCorta.getText().trim();
+        String pausaLarga = txtDuracionPausaLarga.getText().trim();
+        if (!validador.esEnteroPositivo(concentracion)
+                || !validador.esEnteroPositivo(pausaCorta)
+                || !validador.esEnteroPositivo(pausaLarga)) {
+            JOptionPane.showMessageDialog(this,
+                    "Las tres duraciones deben ser números enteros mayores que cero.",
+                    "Configuración inválida", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (hayCicloEnCurso()) {
+            JOptionPane.showMessageDialog(this,
+                    "Termina el ciclo y la pausa obligatoria antes de cambiar las duraciones.",
+                    "Ciclo activo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (!gestionSaturacion.getCiclos().isEmpty()
+                && JOptionPane.showConfirmDialog(this,
+                        "Aplicar la configuración reemplazará la rutina planificada. ¿Continuar?",
+                        "Reemplazar rutina", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        temporizador.stop();
+        gestionSaturacion.removerListener(this);
+        gestionSaturacion = new GestionSaturacion(
+                Integer.parseInt(concentracion),
+                Integer.parseInt(pausaCorta),
+                Integer.parseInt(pausaLarga),
+                GestionSaturacion.CICLOS_PARA_PAUSA_LARGA_DEFECTO,
+                GestionSaturacion.LIMITE_ADVERTENCIA_DEFECTO_MIN,
+                GestionSaturacion.LIMITE_CRITICO_DEFECTO_MIN);
+        gestionSaturacion.agregarListener(this);
+        relojPausado = false;
+        lblResumenPlan.setText("Configuración aplicada: " + concentracion + "/"
+                + pausaCorta + "/" + pausaLarga + " min.");
+        actualizarTablaRutinaDiaria();
+        actualizarPanelReloj();
+        actualizarEstadoBotones();
     }
 
     public boolean cargarTareaEnRutina(Tarea tarea) {

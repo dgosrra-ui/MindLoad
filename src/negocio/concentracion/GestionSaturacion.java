@@ -29,7 +29,10 @@ public class GestionSaturacion {
     public static final int LIMITE_ADVERTENCIA_DEFECTO_MIN = 150;
     public static final int LIMITE_CRITICO_DEFECTO_MIN = 240;
 
-    /** Si sobra menos que esto al fragmentar, se suma al último bloque. */
+    /**
+     * Configuración predeterminada 25/5/15. Al fragmentar, el remanente menor a
+     * 5 minutos se agrega al último bloque para evitar un ciclo demasiado corto.
+     */
     private static final int MINUTOS_MINIMOS_ULTIMO_BLOQUE = 5;
 
     private static final String[] PAUSAS_ACTIVAS = {
