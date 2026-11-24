@@ -3,10 +3,10 @@
 Proyecto Java organizado por paquetes:
 
 - `src/modelo/`: entidades del dominio.
-- `src/negocio/`: gestión académica, validaciones, persistencia y concentración.
-- `src/negocio/concentracion/`: planificación Pomodoro y gestión de saturación.
+- `src/negocio/`: gestión académica, `GestorHorarios`, validaciones y persistencia.
+- `src/negocio/concentracion/`: lógica de ciclos Pomodoro y alertas de saturación.
 - `src/interfaz/`: interfaz gráfica Swing de gestión académica y rutina diaria.
-- `pruebas/negocio/`: pruebas del gestor académico y las validaciones.
+- `pruebas/negocio/`: pruebas del gestor académico, horarios y persistencia.
 - `pruebas/negocio/concentracion/`: pruebas del módulo de concentración.
 
 La aplicación persiste el usuario, sus materias, tareas y agenda semanal en

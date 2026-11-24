@@ -13,13 +13,13 @@ por fecha o materia, cambiar la duración, marcar una tarea como completada y
 eliminarla. Para eliminar una materia, elimina primero sus tareas y selecciónala
 en el formulario de materias.
 
-## Agenda y conflictos de horario
+## Horarios y conflictos de horario
 
-En **Agenda semanal**, selecciona si registrarás una clase o un entrenamiento,
-indica el día, nombre y horas de inicio y fin en formato `HH:mm`. La aplicación
-rechaza intervalos inválidos y horarios que se traslapen en el mismo día; una
-actividad que comienza justo al terminar otra sí es válida. Selecciona una fila
-y usa **Eliminar actividad** para retirarla.
+En **Horarios**, selecciona si registrarás una clase, un entrenamiento o una
+pausa activa; indica el día, nombre y horas de inicio y fin en formato `HH:mm`.
+La aplicación rechaza intervalos inválidos y horarios que se traslapen en el
+mismo día; una actividad que comienza justo al terminar otra sí es válida.
+Selecciona una fila y usa **Eliminar actividad** para retirarla.
 
 La sección **Agenda de hoy** de Rutina Diaria presenta las clases y los
 entrenamientos del día con sus horas. La agenda usa repetición semanal.
