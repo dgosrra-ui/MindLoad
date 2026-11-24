@@ -10,9 +10,10 @@ Proyecto Java organizado por paquetes:
 - `pruebas/negocio/concentracion/`: pruebas del módulo de concentración.
 
 La aplicación persiste el usuario, sus materias, tareas y agenda semanal en
-`~/.mindload/usuario.ser`. Las clases y los entrenamientos comparten la
-superclase `modelo.ActividadProgramada`; los horarios que se traslapan en el
-mismo día se rechazan.
+`~/.mindload/mindload.dat` y vuelve a guardar al cerrar. Las clases, los
+entrenamientos y las pausas activas comparten la superclase
+`modelo.ActividadProgramada`; los horarios que se traslapan en el mismo día se
+rechazan.
 
 ## Compilar
 

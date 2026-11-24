@@ -5,8 +5,8 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -16,6 +16,8 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import negocio.concentracion.GestionSaturacion;
 import modelo.Materia;
 import modelo.Tarea;
@@ -46,13 +48,21 @@ public class VentanaPrincipal extends JFrame {
         super("MindLoad - Gestión de Carga Académica y Rutina Diaria");
 
         this.repositorio = new UsuarioRepositorio(Paths.get(
-                System.getProperty("user.home"), ".mindload", "usuario.ser"));
+                System.getProperty("user.home"), ".mindload", "mindload.dat"));
         this.usuario = repositorio.cargar();
         this.gestor = new GestorCargaAcademica(usuario);
         this.gestionSaturacion = new GestionSaturacion();
         this.gestorHorarios = new GestorHorarios(usuario);
 
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent evento) {
+                if (guardarDatos()) {
+                    dispose();
+                }
+            }
+        });
         setSize(1120, 740);
         setMinimumSize(new Dimension(960, 640));
         setLocationRelativeTo(null);
@@ -155,14 +165,16 @@ public class VentanaPrincipal extends JFrame {
         guardarDatos();
     }
 
-    private void guardarDatos() {
+    private boolean guardarDatos() {
         try {
             repositorio.guardar(usuario);
+            return true;
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this,
                     "Los cambios siguen disponibles en esta sesión, pero no se pudieron guardar:\n"
                             + ex.getMessage(),
                     "Error de persistencia", JOptionPane.ERROR_MESSAGE);
+            return false;
         }
     }
 

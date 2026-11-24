@@ -4,7 +4,8 @@
 
 Ejecuta `interfaz.VentanaPrincipal` después de compilar el proyecto. El perfil,
 las materias, las tareas y la agenda se guardan automáticamente en
-`~/.mindload/usuario.ser`; si el guardado falla, la aplicación muestra un aviso.
+`~/.mindload/mindload.dat` y al cerrar; si el guardado falla, la aplicación
+muestra un aviso y permite reintentar el cierre.
 
 ## Gestión académica
 
